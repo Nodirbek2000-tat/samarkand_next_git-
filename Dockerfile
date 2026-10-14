@@ -1,10 +1,11 @@
 # Yangi Samarqand — Next.js site (standalone server)
-FROM node:24-alpine AS deps
+# exact Node (bundled npm 11.6.1) that produced package-lock.json — a newer npm rejects it in `npm ci`
+FROM node:24.11.0-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:24-alpine AS build
+FROM node:24.11.0-alpine AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 # rewrites (/api, /media -> Django) are fixed at build time; inside Docker Django is "backend"
@@ -14,7 +15,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-FROM node:24-alpine AS run
+FROM node:24.11.0-alpine AS run
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
