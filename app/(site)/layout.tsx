@@ -1,0 +1,19 @@
+import { SmoothScroll } from "@/components/providers/smooth-scroll";
+import { SiteHeader } from "@/components/site/site-header";
+import { SiteFooter } from "@/components/site/site-footer";
+import { RouteEffects } from "@/components/site/route-effects";
+import { api } from "@/lib/api/server";
+
+export default async function SiteLayout({ children }: LayoutProps<"/">) {
+  const settings = await api.settings();
+  return (
+    <SmoothScroll>
+      <RouteEffects />
+      <SiteHeader phone={settings?.phone} />
+      <main id="main" className="min-h-svh">
+        {children}
+      </main>
+      <SiteFooter settings={settings} />
+    </SmoothScroll>
+  );
+}

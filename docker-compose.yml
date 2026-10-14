@@ -1,0 +1,64 @@
+# Frontend: Next.js sayt + Nginx (80/443, avtomatik SSL — Let's Encrypt).
+# Serverda (shu papkada):  docker compose up -d --build
+#
+# Nginx domenga kirish nuqtasi: "/" → frontend, "/api" → backend (alohida deploy qilingan),
+# "/media" va "/static" → backend bilan umumiy Docker volume'lardan. Bir martalik tayyorlov — DEPLOY.md.
+
+name: mentadbirkor-frontend
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  frontend:
+    build:
+      context: .
+      args:
+        DJANGO_URL: http://backend:8000
+    restart: unless-stopped
+    environment:
+      DJANGO_URL: http://backend:8000
+      NEXT_REVALIDATE_SECRET: ${NEXT_REVALIDATE_SECRET:?.env da NEXT_REVALIDATE_SECRET kerak}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/kirish"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+    logging: *logging
+
+  nginx:
+    # sertifikatni o‘zi oladi va har 8 kunda yangilanishni tekshiradi
+    image: jonasal/nginx-certbot:6.2.0
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      CERTBOT_EMAIL: ${CERTBOT_EMAIL:-}
+      STAGING: ${CERTBOT_STAGING:-0}
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - ./nginx/user_conf.d:/etc/nginx/user_conf.d:ro
+      - media:/srv/media:ro
+      - static:/srv/static:ro
+    logging: *logging
+
+networks:
+  default:
+    name: mentadbirkor
+    external: true
+
+volumes:
+  letsencrypt:
+  media:
+    name: mentadbirkor_media
+    external: true
+  static:
+    name: mentadbirkor_static
+    external: true

@@ -1,0 +1,135 @@
+"use client";
+
+import { useRef } from "react";
+import { MessagesSquare, LineChart, Landmark, Rocket } from "lucide-react";
+import { gsap, SplitText, useGSAP } from "@/lib/gsap";
+
+const CARDS = [
+  {
+    icon: MessagesSquare,
+    title: "Konsultatsiyalar",
+    text: "Biznes yuritish va davlat organlari bilan ishlash bo‘yicha ekspert ko‘magi.",
+  },
+  {
+    icon: LineChart,
+    title: "Tahlil",
+    text: "Sanoatchilar forumida lokalizatsiya, kooperatsiya va eksport muammolari muhokamasi.",
+  },
+  {
+    icon: Landmark,
+    title: "Muloqot",
+    text: "Viloyat hokimi va soha rahbarlari ishtirokidagi Kengash a’zolari yig‘ilishlari.",
+  },
+  {
+    icon: Rocket,
+    title: "Loyihalarni qo‘llash",
+    text: "Kengash qarori bilan ijtimoiy, ilmiy va yoshlar startap loyihalarini moliyalashtirish.",
+  },
+];
+
+export function Manifesto() {
+  const root = useRef<HTMLElement>(null);
+
+  useGSAP(
+    () => {
+      SplitText.create("[data-manifesto]", {
+        type: "words",
+        autoSplit: true,
+        onSplit: (self) =>
+          gsap.fromTo(
+            self.words,
+            { opacity: 0.12 },
+            {
+              opacity: 1,
+              ease: "none",
+              stagger: 0.1,
+              scrollTrigger: { trigger: "[data-manifesto]", start: "top 80%", end: "bottom 45%", scrub: true },
+            },
+          ),
+      });
+
+      gsap.from("[data-card]", {
+        y: 80,
+        opacity: 0,
+        rotateX: -25,
+        transformOrigin: "50% 100%",
+        duration: 1.3,
+        ease: "expo.out",
+        stagger: 0.1,
+        scrollTrigger: { trigger: "[data-cards]", start: "top 85%" },
+      });
+
+      gsap.to("[data-ring]", {
+        rotate: 180,
+        ease: "none",
+        scrollTrigger: { trigger: root.current, start: "top bottom", end: "bottom top", scrub: true },
+      });
+    },
+    { scope: root },
+  );
+
+  const onMove = (e: React.PointerEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+    e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+  };
+
+  return (
+    <section ref={root} id="kengash" className="relative overflow-hidden bg-ink px-5 py-28 md:px-10 md:py-44">
+      <svg
+        data-ring
+        viewBox="0 0 400 400"
+        className="pointer-events-none absolute -right-40 top-10 size-[640px] opacity-[0.12] md:-right-20"
+        fill="none"
+        stroke="#2ee8d6"
+        strokeWidth="0.6"
+        aria-hidden
+      >
+        {Array.from({ length: 12 }).map((_, i) => (
+          <rect key={i} x="100" y="100" width="200" height="200" transform={`rotate(${i * 7.5} 200 200)`} />
+        ))}
+        <circle cx="200" cy="200" r="190" />
+        <circle cx="200" cy="200" r="60" />
+      </svg>
+
+      <div className="relative mx-auto max-w-[1600px]">
+        <div className="mb-14 flex items-center gap-4 font-mono text-[12.5px] uppercase tracking-[0.22em] text-mist">
+          <span className="text-turq">01</span>
+          <span className="h-px w-16 bg-ivory/20" />
+          Kengash haqida
+        </div>
+
+        <p
+          data-manifesto
+          className="max-w-[22ch] font-display text-[9vw] font-medium leading-[1.02] tracking-[-0.03em] md:max-w-[26ch] md:text-[5.2vw]"
+        >
+          Biz tadbirkorlarni <span className="text-turq">birlashtiramiz</span>, biznes muhitini birga rivojlantiramiz va
+          ishbilarmonlar manfaatlarini <span className="text-gold">himoya qilamiz</span> — mintaqaning ertangi kuni
+          uchun.
+        </p>
+
+        <div data-cards className="mt-24 grid gap-4 [perspective:1200px] sm:grid-cols-2 lg:grid-cols-4">
+          {CARDS.map(({ icon: Icon, title, text }, i) => (
+            <article
+              key={title}
+              data-card
+              data-cursor="hover"
+              onPointerMove={onMove}
+              className="group relative overflow-hidden rounded-3xl border border-ivory/10 bg-ink-2 p-7 transition-colors duration-700 hover:border-turq/40"
+            >
+              <div className="spotlight pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+              <div className="relative flex items-start justify-between">
+                <span className="grid size-12 place-items-center rounded-2xl border border-ivory/10 bg-ink-3 text-turq transition-transform duration-700 ease-expo group-hover:-rotate-12 group-hover:scale-110">
+                  <Icon className="size-5" />
+                </span>
+                <span className="font-mono text-[12.5px] text-mist">0{i + 1}</span>
+              </div>
+              <h3 className="relative mt-16 font-display text-xl font-semibold">{title}</h3>
+              <p className="relative mt-3 text-sm leading-relaxed text-ivory/80">{text}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

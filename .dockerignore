@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.claude
+*.log
+.env*.local
+.env
+Dockerfile
+.dockerignore
+nginx
+docker-compose.yml
+server.env.example
+DEPLOY.md
