@@ -6,8 +6,8 @@ export function StarMark({ className }: { className?: string }) {
     <svg viewBox="0 0 48 48" fill="none" className={cn("size-8", className)} aria-hidden>
       <defs>
         <linearGradient id="star-g" x1="0" y1="0" x2="48" y2="48">
-          <stop offset="0" stopColor="#2ee8d6" />
-          <stop offset="1" stopColor="#f3c46b" />
+          <stop offset="0" style={{ stopColor: "var(--color-turq)" }} />
+          <stop offset="1" style={{ stopColor: "var(--color-gold)" }} />
         </linearGradient>
       </defs>
       <g stroke="url(#star-g)" strokeWidth="1.6">
@@ -15,7 +15,7 @@ export function StarMark({ className }: { className?: string }) {
         <rect x="10" y="10" width="28" height="28" transform="rotate(45 24 24)" />
         <circle cx="24" cy="24" r="6.5" />
       </g>
-      <circle cx="24" cy="24" r="2" fill="#f3c46b" />
+      <circle cx="24" cy="24" r="2" style={{ fill: "var(--color-gold)" }} />
     </svg>
   );
 }

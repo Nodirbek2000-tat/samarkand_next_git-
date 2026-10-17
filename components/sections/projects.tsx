@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, AnimatePresence } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
 import { gsap, useGSAP } from "@/lib/gsap";
+import { useCoverflow, SwipeHint } from "@/components/coverflow";
 
 const PROJECTS = [
   {
@@ -55,8 +56,11 @@ function Art({ colors, index }: { colors: string[]; index: number }) {
   return (
     <div className="relative size-full overflow-hidden" style={{ background: c }}>
       <div
-        className="absolute -inset-1/4 animate-[spin_14s_linear_infinite] blur-3xl"
-        style={{ background: `conic-gradient(from ${index * 60}deg, ${a}, ${b}, ${c}, ${a})` }}
+        className="absolute -inset-1/4 animate-[spin_14s_linear_infinite]"
+        style={{
+          // soft colour fields drawn by gradients — no blur filter on the spinning layer
+          background: `radial-gradient(circle at ${30 + index * 7}% 32%, ${a} 0%, transparent 46%), radial-gradient(circle at 70% 58%, ${b} 0%, transparent 48%), radial-gradient(circle at 38% 78%, ${a} 0%, transparent 40%)`,
+        }}
       />
       <svg viewBox="0 0 200 200" className="absolute inset-0 size-full mix-blend-overlay" fill="none" stroke="#fff" strokeWidth="0.6" aria-hidden>
         {Array.from({ length: 10 }).map((_, i) => (
@@ -73,6 +77,8 @@ function Art({ colors, index }: { colors: string[]; index: number }) {
 
 export function Projects() {
   const root = useRef<HTMLElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  useCoverflow(list);
   const [active, setActive] = useState<number | null>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -81,13 +87,27 @@ export function Projects() {
 
   useGSAP(
     () => {
-      gsap.utils.toArray<HTMLElement>("[data-row]").forEach((row) => {
-        gsap.from(row, {
-          clipPath: "inset(0 0 100% 0)",
-          y: 40,
-          duration: 1.2,
+      const mm = gsap.matchMedia();
+      mm.add("(min-width: 768px)", () => {
+        gsap.utils.toArray<HTMLElement>("[data-row]").forEach((row) => {
+          gsap.from(row, {
+            clipPath: "inset(0 0 100% 0)",
+            y: 40,
+            duration: 1.2,
+            ease: "expo.out",
+            scrollTrigger: { trigger: row, start: "top 90%" },
+          });
+        });
+      });
+      // phones: the list is a swipe carousel (coverflow owns each card's transform) — the whole row flies in
+      mm.add("(max-width: 767px)", () => {
+        gsap.from(list.current, {
+          xPercent: 50,
+          rotate: -4,
+          opacity: 0,
+          duration: 1.4,
           ease: "expo.out",
-          scrollTrigger: { trigger: row, start: "top 90%" },
+          scrollTrigger: { trigger: list.current, start: "top 88%" },
         });
       });
       gsap.from("[data-proj-title] > span", {
@@ -97,6 +117,7 @@ export function Projects() {
         stagger: 0.08,
         scrollTrigger: { trigger: "[data-proj-title]", start: "top 85%" },
       });
+      return () => mm.revert();
     },
     { scope: root },
   );
@@ -105,14 +126,14 @@ export function Projects() {
     <section
       ref={root}
       id="loyihalar"
-      className="relative bg-ink px-5 py-28 md:px-10 md:py-40"
+      className="relative overflow-x-clip bg-ink px-5 py-20 md:px-10 md:py-40"
       onPointerMove={(e) => {
         x.set(e.clientX);
         y.set(e.clientY);
       }}
     >
       <div className="mx-auto max-w-[1600px]">
-        <div className="mb-16 flex flex-col justify-between gap-8 md:flex-row md:items-end">
+        <div className="mb-6 flex flex-col justify-between gap-6 md:mb-16 md:flex-row md:items-end md:gap-8">
           <div>
             <div className="mb-8 flex items-center gap-4 font-mono text-[12.5px] uppercase tracking-[0.22em] text-mist">
               <span className="text-turq">04</span>
@@ -121,7 +142,8 @@ export function Projects() {
             </div>
             <h2
               data-proj-title
-              className="font-display text-5xl font-semibold uppercase leading-[0.95] tracking-[-0.03em] md:text-8xl"
+              data-no-reveal
+              className="font-display text-[min(8.6vw,6rem)] font-semibold uppercase leading-[0.95] tracking-[-0.03em]"
             >
               <span className="block overflow-hidden">
                 <span className="block">Kengash</span>
@@ -137,7 +159,7 @@ export function Projects() {
           </p>
         </div>
 
-        <ul className="border-t border-ivory/10" onPointerLeave={() => setActive(null)}>
+        <ul ref={list} className="rail md:border-t md:border-ivory/10" onPointerLeave={() => setActive(null)}>
           {PROJECTS.map((p, i) => (
             <li
               key={p.title}
@@ -145,10 +167,10 @@ export function Projects() {
               data-cursor="view"
               data-cursor-label="Ko‘rish"
               onPointerEnter={() => setActive(i)}
-              className="group relative border-b border-ivory/10"
+              className="group relative flex flex-col-reverse justify-end overflow-hidden rounded-3xl border border-ivory/10 bg-ink-2 p-4 md:block md:overflow-visible md:rounded-none md:border-x-0 md:border-t-0 md:bg-transparent md:p-0"
             >
               <div className="absolute inset-0 origin-bottom scale-y-0 bg-ivory transition-transform duration-700 ease-expo group-hover:scale-y-100 max-md:hidden" />
-              <div className="relative grid grid-cols-12 items-center gap-4 py-8 transition-colors duration-500 md:py-10 md:group-hover:text-ink">
+              <div className="relative grid grid-cols-12 items-center gap-3 pb-1 transition-colors duration-500 md:gap-4 md:py-10 md:group-hover:text-ink">
                 <span className="col-span-2 font-mono text-xs text-mist md:col-span-1 md:group-hover:text-ink/60">0{i + 1}</span>
                 <h3 className="col-span-10 font-display text-3xl font-semibold uppercase tracking-tight transition-transform duration-700 ease-expo md:col-span-5 md:text-5xl md:group-hover:translate-x-4">
                   {p.title}
@@ -157,7 +179,7 @@ export function Projects() {
                 <span className="col-span-8 font-mono text-[11.5px] uppercase tracking-[0.25em] text-turq md:col-span-2 md:group-hover:text-ink">
                   {p.kind}
                   <br />
-                  <span className="text-ivory/40 md:group-hover:text-ink/50">{p.meta}</span>
+                  <span className="text-ivory/65 md:group-hover:text-ink/60">{p.meta}</span>
                 </span>
                 <span className="col-span-4 flex justify-end md:col-span-1">
                   <span className="grid size-12 place-items-center rounded-full border border-ivory/15 transition-all duration-700 ease-expo md:group-hover:rotate-45 md:group-hover:border-ink md:group-hover:bg-ink md:group-hover:text-ivory">
@@ -165,12 +187,13 @@ export function Projects() {
                   </span>
                 </span>
               </div>
-              <div className="relative mb-8 aspect-[16/9] overflow-hidden rounded-2xl md:hidden">
+              <div className="relative mb-4 aspect-[16/10] overflow-hidden rounded-2xl md:hidden">
                 <Art colors={p.colors} index={i} />
               </div>
             </li>
           ))}
         </ul>
+        <SwipeHint className="md:hidden" />
       </div>
 
       {/* floating preview that follows the pointer (desktop) */}

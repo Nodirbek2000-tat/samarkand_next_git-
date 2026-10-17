@@ -31,7 +31,8 @@ services:
     logging: *logging
 
   nginx:
-    # sertifikatni o‘zi oladi va har 8 kunda yangilanishni tekshiradi
+    # Let's Encrypt sertifikatini o‘zi oladi, har 12 soatda yangilash kerakmi-yo‘qmi tekshiradi
+    # (muddati 30 kundan kam qolganda yangilaydi) va nginx ni o‘zi qayta yuklaydi
     image: jonasal/nginx-certbot:6.2.0
     restart: unless-stopped
     depends_on:
@@ -40,8 +41,9 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      CERTBOT_EMAIL: ${CERTBOT_EMAIL:-}
+      CERTBOT_EMAIL: ${CERTBOT_EMAIL:?.env da CERTBOT_EMAIL kerak (Let's Encrypt xabarlari uchun)}
       STAGING: ${CERTBOT_STAGING:-0}
+      RENEWAL_INTERVAL: 12h
     volumes:
       - letsencrypt:/etc/letsencrypt
       - ./nginx/user_conf.d:/etc/nginx/user_conf.d:ro

@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
+import { isLite } from "@/lib/perf";
 import { StarMark } from "@/components/logo";
 
 const ITEMS = ["Muloqot", "Huquqlar himoyasi", "Investitsiyalar", "Sanoat kooperatsiyasi", "Ijtimoiy loyihalar", "Eksport", "Startaplar"];
@@ -32,9 +33,10 @@ function Row({ reverse = false, outline = false }: { reverse?: boolean; outline?
 export function Marquee() {
   const root = useRef<HTMLDivElement>(null);
 
-  // skew with scroll velocity — reads Lenis-driven ScrollTrigger, no extra listeners
+  // skew with scroll velocity — reads Lenis-driven ScrollTrigger, no extra listeners (not on weak machines)
   useGSAP(
     () => {
+      if (isLite()) return;
       const skew = gsap.quickTo("[data-skew]", "skewX", { duration: 0.6, ease: "power3" });
       ScrollTrigger.create({
         trigger: root.current,

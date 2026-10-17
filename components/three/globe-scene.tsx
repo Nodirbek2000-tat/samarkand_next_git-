@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { Suspense, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import { sceneState } from "@/lib/store";
 import { CITIES, SAMARKAND } from "@/lib/silk-road";
+import { isLite } from "@/lib/perf";
 
 const R = 2;
 const globeUniforms = { uTime: { value: 0 }, uDpr: { value: 1 } };
@@ -15,55 +16,112 @@ function toVec(lat: number, lon: number, r = R) {
   return new THREE.Vector3(-r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
 }
 
-function Dots({ count }: { count: number }) {
-  const { geo, mat } = useMemo(() => {
-    const pos = new Float32Array(count * 3);
-    const seed = new Float32Array(count);
-    const golden = Math.PI * (3 - Math.sqrt(5));
-    for (let i = 0; i < count; i++) {
-      const y = 1 - (i / (count - 1)) * 2;
-      const r = Math.sqrt(1 - y * y);
-      const t = golden * i;
-      pos.set([Math.cos(t) * r * R, y * R, Math.sin(t) * r * R], i * 3);
-      seed[i] = (i * 0.6180339) % 1;
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    geo.setAttribute("aSeed", new THREE.BufferAttribute(seed, 1));
-    const mat = new THREE.ShaderMaterial({
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      uniforms: { uTime: globeUniforms.uTime, uDpr: globeUniforms.uDpr },
+/**
+ * Chromium decodes the maps off the main thread (ImageBitmapLoader): handing a 2K image to the GPU
+ * then no longer freezes the page for a moment. Other browsers use the regular loader.
+ */
+const BITMAPS = typeof window !== "undefined" && typeof createImageBitmap === "function" && /Chrome\//.test(navigator.userAgent);
+
+function useEarthMaps(urls: string[]) {
+  const loaded = useLoader(BITMAPS ? THREE.ImageBitmapLoader : THREE.TextureLoader, urls, (loader) => {
+    if (BITMAPS) (loader as THREE.ImageBitmapLoader).setOptions({ imageOrientation: "flipY", premultiplyAlpha: "none" });
+  });
+  return useMemo(
+    () =>
+      loaded.map((src, i) => {
+        const t = src instanceof THREE.Texture ? src : new THREE.Texture(src as ImageBitmap);
+        if (!(src instanceof THREE.Texture)) {
+          t.flipY = false; // already flipped while decoding
+          t.needsUpdate = true;
+        }
+        if (i < 2) t.colorSpace = THREE.SRGBColorSpace; // day + night are colour, clouds are a mask
+        t.anisotropy = 8;
+        t.wrapS = THREE.RepeatWrapping;
+        return t;
+      }),
+    [loaded],
+  );
+}
+
+/**
+ * The real Earth: NASA Blue Marble by day, Black Marble city lights by night, blended across the
+ * terminator, a slowly drifting cloud layer, sun glint on the oceans and a thin limb of atmosphere.
+ * Imagery: NASA Visible Earth / Earth Observatory.
+ */
+function Earth({ mobile, sun }: { mobile: boolean; sun: THREE.Vector3 }) {
+  // 2K maps stay sharp at the globe's on-screen size and are a third of the download of the full ones
+  const [day, night, clouds] = useEarthMaps([
+    "/textures/earth/day-2k.webp",
+    "/textures/earth/night-2k.webp",
+    `/textures/earth/clouds${mobile ? "-1k" : ""}.webp`,
+  ]);
+  const mat = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        uDay: { value: day },
+        uNight: { value: night },
+        uClouds: { value: clouds },
+        uSun: { value: sun },
+        uTime: globeUniforms.uTime,
+      },
       vertexShader: /* glsl */ `
-        attribute float aSeed;
-        uniform float uTime;
-        uniform float uDpr;
-        varying float vA;
-        varying float vFacing;
+        varying vec2 vUv;
+        varying vec3 vN;
+        varying vec3 vPos;
         void main() {
-          vec4 mv = modelViewMatrix * vec4(position, 1.0);
-          vec3 n = normalize(normalMatrix * normalize(position));
-          vFacing = smoothstep(-0.1, 0.6, dot(n, normalize(-mv.xyz)));
-          vA = 0.35 + 0.65 * (0.5 + 0.5 * sin(uTime * 1.5 + aSeed * 40.0));
-          gl_PointSize = (3.2 + aSeed * 3.0) * uDpr * (6.5 / -mv.z);
-          gl_Position = projectionMatrix * mv;
+          vUv = uv;
+          vN = normalize(mat3(modelMatrix) * normal);
+          vec4 wp = modelMatrix * vec4(position, 1.0);
+          vPos = wp.xyz;
+          gl_Position = projectionMatrix * viewMatrix * wp;
         }
       `,
       fragmentShader: /* glsl */ `
-        varying float vA;
-        varying float vFacing;
+        uniform sampler2D uDay;
+        uniform sampler2D uNight;
+        uniform sampler2D uClouds;
+        uniform vec3 uSun;
+        uniform float uTime;
+        varying vec2 vUv;
+        varying vec3 vN;
+        varying vec3 vPos;
         void main() {
-          float d = length(gl_PointCoord - 0.5);
-          float a = smoothstep(0.5, 0.0, d);
-          vec3 col = mix(vec3(0.23, 0.36, 1.0), vec3(0.18, 0.91, 0.84), vA);
-          gl_FragColor = vec4(col * 1.4, a * (0.35 + vA * 0.65) * vFacing);
+          vec3 n = normalize(vN);
+          vec3 v = normalize(cameraPosition - vPos);
+          float sunOrient = dot(n, uSun);
+          float dayMix = smoothstep(-0.2, 0.45, sunOrient);
+
+          vec3 dayCol = texture2D(uDay, vUv).rgb;
+          vec3 nightCol = texture2D(uNight, vUv).rgb;
+          float cloud = smoothstep(0.2, 0.95, texture2D(uClouds, vUv + vec2(uTime * 0.0015, 0.0)).r);
+
+          // city lights only on the dark side, dimmed under clouds
+          vec3 lights = pow(nightCol, vec3(1.4)) * vec3(1.25, 0.95, 0.6) * 2.4 * (1.0 - cloud * 0.8);
+          vec3 col = mix(lights, dayCol * (0.25 + 0.95 * max(sunOrient, 0.0)), dayMix);
+          col = mix(col, vec3(1.0), cloud * dayMix * 0.85);
+
+          // sun glint on open water
+          float water = smoothstep(0.015, 0.09, dayCol.b - max(dayCol.r, dayCol.g));
+          float spec = pow(max(dot(reflect(-uSun, n), v), 0.0), 40.0) * water * (1.0 - cloud) * dayMix;
+          col += spec * vec3(1.0, 0.88, 0.7) * 0.9;
+
+          // atmosphere seen on the disc: blue by day, warm along the terminator
+          float fres = pow(1.0 - max(dot(v, n), 0.0), 2.6);
+          vec3 atmo = mix(vec3(1.0, 0.42, 0.16), vec3(0.32, 0.62, 1.0), smoothstep(-0.15, 0.5, sunOrient));
+          col = mix(col, atmo, fres * smoothstep(-0.35, 0.9, sunOrient) * 0.85);
+
+          gl_FragColor = vec4(col, 1.0);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
         }
       `,
     });
-    return { geo, mat };
-  }, [count]);
-  return <points geometry={geo} material={mat} />;
+  }, [day, night, clouds, sun]);
+  return (
+    <mesh material={mat}>
+      <sphereGeometry args={[R, 128, 96]} />
+    </mesh>
+  );
 }
 
 function Atmosphere() {
@@ -89,38 +147,17 @@ function Atmosphere() {
           varying vec3 vV;
           void main() {
             // back faces: brightest right at the globe's silhouette, fading to the outer shell
-            float i = pow(clamp(-dot(vN, vV) / 0.55, 0.0, 1.0), 4.0) * 0.75;
-            gl_FragColor = vec4(vec3(0.18, 0.91, 0.84) * i, i);
+            float i = pow(clamp(-dot(vN, vV) / 0.55, 0.0, 1.0), 4.0) * 0.8;
+            gl_FragColor = vec4(vec3(0.33, 0.62, 1.0) * i, i);
           }
         `,
       }),
     [],
   );
   return (
-    <mesh material={mat} scale={1.18}>
+    <mesh material={mat} scale={1.12}>
       <sphereGeometry args={[R, 64, 64]} />
     </mesh>
-  );
-}
-
-function Graticule() {
-  const geo = useMemo(() => {
-    const pts: number[] = [];
-    const push = (a: THREE.Vector3, b: THREE.Vector3) => pts.push(a.x, a.y, a.z, b.x, b.y, b.z);
-    for (let lat = -60; lat <= 60; lat += 30) {
-      for (let lon = -180; lon < 180; lon += 4) push(toVec(lat, lon, R * 1.001), toVec(lat, lon + 4, R * 1.001));
-    }
-    for (let lon = -180; lon < 180; lon += 30) {
-      for (let lat = -88; lat < 88; lat += 4) push(toVec(lat, lon, R * 1.001), toVec(lat + 4, lon, R * 1.001));
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
-    return g;
-  }, []);
-  return (
-    <lineSegments geometry={geo}>
-      <lineBasicMaterial color="#4f6cff" transparent opacity={0.35} depthWrite={false} />
-    </lineSegments>
   );
 }
 
@@ -210,7 +247,33 @@ function SamarkandBeacon() {
   );
 }
 
-function Globe({ progress, mobile }: { progress: React.RefObject<number>; mobile: boolean }) {
+/** Tells the page once the Earth has been drawn with its maps (the picture underneath can fade out). */
+function FirstFrame({ onReady }: { onReady?: () => void }) {
+  const done = useRef(false);
+  useFrame(() => {
+    if (done.current) return;
+    done.current = true;
+    requestAnimationFrame(() => onReady?.());
+  });
+  return null;
+}
+
+function Globe({
+  progress,
+  mobile,
+  night,
+  onReady,
+}: {
+  progress: React.RefObject<number>;
+  mobile: boolean;
+  night: boolean;
+  onReady?: () => void;
+}) {
+  // world-space sun: from the upper left by day; behind the globe at night so the city lights glow
+  const sun = useMemo(
+    () => (night ? new THREE.Vector3(-0.85, 0.25, -0.45) : new THREE.Vector3(-0.55, 0.35, 0.76)).normalize(),
+    [night],
+  );
   const group = useRef<THREE.Group>(null);
   const face = useMemo(() => {
     const p = toVec(SAMARKAND.lat, SAMARKAND.lon);
@@ -232,12 +295,10 @@ function Globe({ progress, mobile }: { progress: React.RefObject<number>; mobile
 
   return (
     <group ref={group}>
-      <mesh>
-        <sphereGeometry args={[R * 0.995, 64, 64]} />
-        <meshBasicMaterial color="#040817" />
-      </mesh>
-      <Graticule />
-      <Dots count={mobile ? 1800 : 4200} />
+      <Suspense fallback={null}>
+        <Earth mobile={mobile} sun={sun} />
+        <FirstFrame onReady={onReady} />
+      </Suspense>
       <Arcs />
       <SamarkandBeacon />
       <Atmosphere />
@@ -245,16 +306,27 @@ function Globe({ progress, mobile }: { progress: React.RefObject<number>; mobile
   );
 }
 
-export default function GlobeScene({ active, progress }: { active: boolean; progress: React.RefObject<number> }) {
+export default function GlobeScene({
+  active,
+  progress,
+  theme = "light",
+  onReady,
+}: {
+  active: boolean;
+  progress: React.RefObject<number>;
+  theme?: "light" | "dark";
+  onReady?: () => void;
+}) {
   const [mobile] = useState(() => window.matchMedia("(max-width: 767px)").matches);
+  const [lite] = useState(isLite);
   return (
     <Canvas
-      dpr={[1, mobile ? 1.5 : 2]}
+      dpr={lite ? 1 : [1, mobile ? 1.25 : 1.5]}
       frameloop={active ? "always" : "never"}
       camera={{ position: [0, 0, mobile ? 8.6 : 7.8], fov: 40 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
     >
-      <Globe progress={progress} mobile={mobile} />
+      <Globe progress={progress} mobile={mobile} night={theme === "dark"} onReady={onReady} />
     </Canvas>
   );
 }

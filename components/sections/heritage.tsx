@@ -2,105 +2,102 @@
 
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
+import { isLite } from "@/lib/perf";
 
-/* Procedural line-art skylines built from Timurid primitives. */
-const BASE = 260;
-
-function portal(x: number, w: number, h: number) {
-  const ow = w * 0.5;
-  const s = h * 0.45;
-  const r = ow * 0.62;
-  const apex = s + ow * 0.6;
-  return [
-    `M${x - w / 2} ${BASE} V${BASE - h} H${x + w / 2} V${BASE}`,
-    `M${x - ow / 2} ${BASE} V${BASE - s} A${r} ${r} 0 0 1 ${x} ${BASE - apex} A${r} ${r} 0 0 1 ${x + ow / 2} ${BASE - s} V${BASE}`,
-    `M${x - w / 2 + 6} ${BASE - h + 12} H${x + w / 2 - 6}`,
-  ];
-}
-function dome(x: number, r: number, y: number) {
-  return [
-    `M${x - r} ${BASE - y} V${BASE - y + 26} M${x + r} ${BASE - y} V${BASE - y + 26}`,
-    `M${x - r} ${BASE - y} C${x - r * 1.25} ${BASE - y - r * 0.9} ${x - r * 0.3} ${BASE - y - r * 1.5} ${x} ${BASE - y - r * 1.7} C${x + r * 0.3} ${BASE - y - r * 1.5} ${x + r * 1.25} ${BASE - y - r * 0.9} ${x + r} ${BASE - y}`,
-    `M${x} ${BASE - y - r * 1.7} V${BASE - y - r * 1.7 - 12}`,
-  ];
-}
-function minaret(x: number, h: number) {
-  return [
-    `M${x - 6} ${BASE} L${x - 4} ${BASE - h} H${x + 4} L${x + 6} ${BASE}`,
-    `M${x - 8} ${BASE - h} H${x + 8} M${x - 5} ${BASE - h} Q${x} ${BASE - h - 14} ${x + 5} ${BASE - h}`,
-    `M${x - 5} ${BASE - h * 0.35} H${x + 5} M${x - 4.5} ${BASE - h * 0.65} H${x + 4.5}`,
-  ];
-}
-function tower(x: number, w: number, h: number) {
-  return [`M${x - w / 2} ${BASE} V${BASE - h} H${x + w / 2} V${BASE}`, `M${x - w / 2} ${BASE - h + 20} H${x + w / 2}`];
-}
-
-const SKYLINES: string[][] = [
-  // Registon
-  [...portal(90, 90, 150), ...portal(250, 110, 180), ...portal(410, 90, 150), ...minaret(35, 170), ...minaret(465, 170), ...dome(170, 30, 120), ...dome(330, 30, 120)],
-  // Shohi Zinda — a street of small domed mausoleums
-  [...portal(70, 60, 100), ...dome(70, 22, 100), ...portal(160, 70, 120), ...dome(160, 26, 120), ...portal(255, 60, 110), ...dome(255, 22, 110), ...portal(350, 80, 135), ...dome(350, 30, 135), ...portal(445, 60, 100), ...dome(445, 22, 100)],
-  // Modern gates — station & airport
-  [`M20 ${BASE} H480`, `M40 ${BASE} V160 Q250 40 460 160 V${BASE}`, ...Array.from({ length: 9 }, (_, i) => `M${80 + i * 42} ${BASE} V${150 - Math.sin((i / 8) * Math.PI) * 60}`), ...portal(250, 90, 120)],
-  // Eternal city — new quarter
-  [...tower(60, 50, 160), ...tower(120, 40, 120), ...portal(250, 120, 170), ...dome(250, 34, 170), ...tower(380, 46, 140), ...tower(440, 40, 190), ...minaret(170, 150), ...minaret(330, 150)],
-  // Imam Bukhari complex
-  [...portal(250, 130, 190), ...dome(250, 46, 190), ...dome(130, 30, 110), ...dome(370, 30, 110), ...tower(130, 80, 110), ...tower(370, 80, 110), ...minaret(50, 200), ...minaret(450, 200)],
-];
+import { SCENES, VIEW, type FillKind } from "./heritage-art";
 
 const PLACES = [
   { name: "Registon", kicker: "Yurak", text: "Samarqandning ko‘p asrlik tarixi va me’morchiligining yuragi." },
   { name: "Shohi Zinda", kicker: "Ziyorat", text: "Samarqandning eng muqaddas ziyoratgohlaridan biri." },
   { name: "Zamonaviy darvoza", kicker: "Dunyo", text: "Samarqandning dunyoga ochilgan zamonaviy darvozasi." },
   { name: "Abadiy shahar", kicker: "Kelajak", text: "Turizm, biznes va investitsiyalar uchun yangi makon." },
-  { name: "Imom Buxoriy majmuasi", kicker: "Ma’naviyat", text: "Ma’naviy meros va mamlakat kelajagining ramzi." },
+  // one line like the other titles (as in the hero journey), so the drawing below keeps the same room
+  { name: "Imom al‑Buxoriy", kicker: "Ma’naviyat", text: "Imom al‑Buxoriy majmuasi — ma’naviy meros va mamlakat kelajagining ramzi." },
 ];
 
-const TINTS = ["#2ee8d6", "#f3c46b", "#3b5bff", "#ff7847", "#2ee8d6"];
+// theme tokens, not hex: deep accents on the light theme, bright ones at night
+const TINTS = ["var(--color-turq)", "var(--color-gold)", "var(--color-lapis)", "var(--color-ember)", "var(--color-turq)"];
+
+// opaque fills: "bg" (the card colour) hides whatever stands behind a building — depth without masks
+const FILL: Record<FillKind, string> = {
+  bg: "var(--color-ink-2)",
+  tile: "color-mix(in oklab, var(--color-lapis) 20%, var(--color-ink-2))",
+  dome: "color-mix(in oklab, var(--color-turq) 32%, var(--color-ink-2))",
+  gold: "color-mix(in oklab, var(--color-gold) 55%, var(--color-ink-2))",
+};
+const FILL_ORDER: FillKind[] = ["bg", "tile", "dome", "gold"];
 
 export function Heritage() {
   const root = useRef<HTMLElement>(null);
 
   useGSAP(
-    () => {
+    (_, contextSafe) => {
+      // weak machines and reduced motion: the drawings are simply there, finished
+      const still = isLite() || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const cards = gsap.utils.toArray<HTMLElement>("[data-place]");
-      cards.forEach((card, i) => {
-        const paths = card.querySelectorAll<SVGPathElement>("path");
-        paths.forEach((p) => {
-          const len = p.getTotalLength();
-          gsap.set(p, { strokeDasharray: len, strokeDashoffset: len });
-        });
-        gsap.to(paths, {
-          strokeDashoffset: 0,
-          duration: 2.4,
-          ease: "power2.inOut",
-          stagger: 0.04,
-          scrollTrigger: { trigger: card, start: "top 70%" },
-        });
 
-        if (i < cards.length - 1) {
-          gsap.to(card.querySelector("[data-place-inner]"), {
-            scale: 0.9,
-            opacity: 0.35,
-            filter: "blur(4px)",
-            ease: "none",
-            scrollTrigger: {
-              trigger: cards[i + 1],
-              start: "top bottom",
-              end: "top 15%",
-              scrub: true,
-            },
+      // A card's drawing is prepared about a screen before it scrolls in — measuring every line of all five
+      // drawings up front made the page's first seconds heavier.
+      const prepare = contextSafe!((card: HTMLElement) => {
+        // fit the drawing to its own bounds, so every scene fills the card (no empty sky)
+        card.querySelectorAll<SVGSVGElement>("svg[data-art]").forEach((svg) => {
+          const b = (svg.firstElementChild as SVGGElement).getBBox();
+          const pad = 10;
+          svg.setAttribute("viewBox", `${b.x - pad} ${b.y - pad} ${b.width + pad * 2} ${b.height + pad * 2}`);
+          // phones: fill the narrow card and let the far sides go, rather than a tiny strip
+          svg.setAttribute("preserveAspectRatio", window.innerWidth < 768 ? "xMidYMax slice" : "xMidYMax meet");
+        });
+        // the drawing: outlines first, then the fine details, then the colours settle in
+        if (!still) {
+          const strokes = card.querySelectorAll<SVGPathElement>("[data-line], [data-detail]");
+          strokes.forEach((p) => {
+            const len = p.getTotalLength();
+            gsap.set(p, { strokeDasharray: len, strokeDashoffset: len });
           });
+          const fills = card.querySelectorAll("[data-fill]");
+          gsap.set(fills, { fillOpacity: 0 });
+          gsap
+            .timeline({ scrollTrigger: { trigger: card, start: "top 72%", once: true } })
+            .to(card.querySelectorAll("[data-line]"), { strokeDashoffset: 0, duration: 2.2, ease: "power2.inOut", stagger: 0.05 }, 0)
+            .to(card.querySelectorAll("[data-detail]"), { strokeDashoffset: 0, duration: 1.8, ease: "power1.inOut", stagger: 0.03 }, 0.6)
+            .to(fills, { fillOpacity: 1, duration: 1.1, ease: "power1.out", stagger: 0.02 }, 1.3);
         }
       });
+      const io = new IntersectionObserver(
+        (entries) =>
+          entries.forEach((e) => {
+            if (!e.isIntersecting) return;
+            io.unobserve(e.target);
+            prepare(e.target as HTMLElement);
+          }),
+        { rootMargin: "100% 0px" },
+      );
+
+      cards.forEach((card, i) => {
+        io.observe(card);
+        // the next card slides over: this one sinks and dims under an opaque shade (never see-through,
+        // so the cards further back never show through it)
+        if (i < cards.length - 1) {
+          const st = { trigger: cards[i + 1], start: "top bottom", end: "top 15%", scrub: true };
+          gsap.to(card.querySelector("[data-place-inner]"), {
+            scale: 0.92,
+            // phones: the covered card also tips aside, like a deck being dealt
+            rotate: () => (window.innerWidth < 768 ? (i % 2 ? 4 : -4) : 0),
+            ease: "none",
+            scrollTrigger: st,
+          });
+          gsap.to(card.querySelector("[data-place-shade]"), { opacity: 0.55, ease: "none", scrollTrigger: { ...st } });
+        }
+      });
+      return () => io.disconnect();
     },
     { scope: root },
   );
 
   return (
-    <section ref={root} id="meros" className="relative bg-ink px-5 pb-32 md:px-10">
+    <section ref={root} id="meros" className="relative bg-ink px-5 pb-20 md:px-10 md:pb-32">
       <div className="mx-auto max-w-[1600px]">
-        <div className="mb-16 flex flex-col justify-between gap-6 pt-10 md:flex-row md:items-end">
+        <div className="mb-10 flex flex-col justify-between gap-6 pt-10 md:mb-16 md:flex-row md:items-end">
           <div>
             <div className="mb-8 flex items-center gap-4 font-mono text-[12.5px] uppercase tracking-[0.22em] text-mist">
               <span className="text-turq">09</span>
@@ -120,20 +117,24 @@ export function Heritage() {
 
         <div className="relative">
           {PLACES.map((p, i) => (
-            <article key={p.name} data-place className="sticky top-20 h-[78svh] pt-4 md:top-24" style={{ zIndex: i + 1 }}>
+            <article key={p.name} data-place className="sticky top-16 h-[54svh] pt-4 md:top-24 md:h-[78svh]" style={{ zIndex: i + 1 }}>
               <div
                 data-place-inner
                 className="relative flex h-full origin-top flex-col justify-between overflow-hidden rounded-[2rem] border border-ivory/10 bg-ink-2 p-7 md:p-12"
               >
                 <div
-                  className="pointer-events-none absolute inset-0 opacity-60"
+                  className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
                   style={{
-                    background: `radial-gradient(ellipse at 70% 110%, color-mix(in oklab, ${TINTS[i]} 30%, transparent), transparent 60%)`,
+                    background: `radial-gradient(ellipse at 90% 0%, color-mix(in oklab, ${TINTS[i]} 14%, transparent), transparent 70%)`,
                   }}
                 />
+                <div data-place-shade className="pointer-events-none absolute inset-0 z-10 bg-ink opacity-0" />
                 <div className="relative flex items-start justify-between gap-6">
                   <div>
-                    <span className="font-mono text-[12.5px] uppercase tracking-[0.2em]" style={{ color: TINTS[i] }}>
+                    <span
+                      className="font-mono text-[12.5px] uppercase tracking-[0.2em]"
+                      style={{ color: `color-mix(in oklab, ${TINTS[i]} 72%, var(--color-ivory))` }}
+                    >
                       0{i + 1} — {p.kicker}
                     </span>
                     <h3 className="mt-4 font-display text-4xl font-semibold uppercase tracking-tight md:text-7xl">{p.name}</h3>
@@ -142,19 +143,26 @@ export function Heritage() {
                 </div>
 
                 <svg
-                  viewBox="0 0 500 270"
-                  className="relative mx-auto h-[45%] w-full max-w-4xl md:h-[60%]"
+                  data-art
+                  viewBox={`0 0 ${VIEW.w} ${VIEW.h}`}
+                  preserveAspectRatio="xMidYMax meet"
+                  className="relative mt-4 min-h-0 w-full flex-1"
                   fill="none"
-                  stroke={TINTS[i]}
-                  strokeWidth="1.2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   aria-hidden
                 >
-                  {SKYLINES[i].map((d, k) => (
-                    <path key={k} d={d} />
-                  ))}
-                  <path d={`M0 ${BASE} H500`} stroke="rgb(244 239 228 / 0.25)" />
+                  <g>
+                    {SCENES[i].map((part, k) => (
+                      <g key={k}>
+                        {FILL_ORDER.map((f) =>
+                          part.fills[f] ? <path key={f} data-fill d={part.fills[f]} style={{ fill: FILL[f] }} /> : null,
+                        )}
+                        {part.main && <path data-line d={part.main} strokeWidth={1.6} style={{ stroke: TINTS[i] }} />}
+                        {part.detail && <path data-detail d={part.detail} strokeWidth={0.9} opacity={0.7} style={{ stroke: TINTS[i] }} />}
+                      </g>
+                    ))}
+                  </g>
                 </svg>
 
                 <p className="relative text-ivory/85 md:hidden">{p.text}</p>

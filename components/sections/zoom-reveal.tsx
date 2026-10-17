@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
+import { gpuWhileMoving } from "@/lib/gpu-while-moving";
 import { StarMark } from "@/components/logo";
 
 /** Pinned scene: the word is a window cut out of the dark; scrolling flies the camera through it. */
@@ -11,13 +12,24 @@ export function ZoomReveal() {
   useGSAP(
     () => {
       const tl = gsap.timeline({
-        scrollTrigger: { trigger: root.current, start: "top top", end: "+=170%", pin: true, scrub: 1 },
+        // phones fly through the word in a shorter scroll
+        scrollTrigger: {
+          trigger: root.current,
+          start: "top top",
+          end: () => (window.innerWidth < 768 ? "+=110%" : "+=170%"),
+          pin: true,
+          scrub: 1,
+          invalidateOnRefresh: true,
+        },
       });
       tl.fromTo("[data-zoom-mask]", { scale: 1 }, { scale: 38, ease: "power3.in", duration: 1 }, 0)
         .to("[data-zoom-cap]", { opacity: 0, y: -40, duration: 0.25 }, 0)
         .to("[data-zoom-overlay]", { opacity: 0, duration: 0.2 }, 0.78)
         .fromTo("[data-zoom-inner]", { scale: 1.4, rotate: -8 }, { scale: 1, rotate: 0, ease: "none", duration: 1 }, 0)
         .from("[data-zoom-after] > *", { opacity: 0, y: 60, stagger: 0.05, duration: 0.2 }, 0.82);
+      // the word mask (scaled up to 38×) and the colour field behind it are not re-drawn every frame
+      const q = gsap.utils.selector(root);
+      return gpuWhileMoving(tl, [q("[data-zoom-mask]")[0], q("[data-zoom-inner]")[0]]);
     },
     { scope: root },
   );

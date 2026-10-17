@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Unbounded, Manrope, JetBrains_Mono } from "next/font/google";
 import { NavProgress } from "@/components/nav-progress";
 import { THEME_SCRIPT } from "@/lib/theme-script";
+import { LITE_SCRIPT } from "@/lib/perf";
 import "./globals.css";
 
 const unbounded = Unbounded({
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f7f4ed" },
-    { media: "(prefers-color-scheme: dark)", color: "#03050b" },
+    { media: "(prefers-color-scheme: dark)", color: "#10132f" },
   ],
 };
 
@@ -48,7 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${unbounded.variable} ${manrope.variable} ${jetbrains.variable} antialiased`}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT + ";" + LITE_SCRIPT }} />
       </head>
       {/* browser extensions (e.g. ColorZilla) inject attributes into <body> */}
       <body suppressHydrationWarning>

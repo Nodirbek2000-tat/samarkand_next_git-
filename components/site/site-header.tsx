@@ -2,27 +2,50 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowUpRight, ChevronDown, LayoutDashboard, LogIn, Phone, Search, X } from "lucide-react";
+import { ArrowUpRight, BookOpen, ChevronDown, LayoutDashboard, LogIn, Phone, Search, X } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Magnetic } from "@/components/magnetic";
 import { AdminQuick } from "@/components/admin-quick";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useLenis } from "@/components/providers/smooth-scroll";
 import { useSession, type SessionUser } from "@/lib/session";
+import { useIntroDone } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import { SITE_NAV, type NavGroup } from "./nav";
+import { SITE_NAV } from "./nav";
 import { PathWatcher } from "./path-watcher";
 
 const ease = [0.16, 1, 0.3, 1] as const;
+// «Made in Samarkand» electronic catalogue — the admin can change it in the site settings
+const CATALOG_URL = "http://madeinsam.uz";
 
-function isActive(pathname: string, group: NavGroup) {
-  return group.children.some((c) => pathname === c.href || (c.href !== "/" && pathname.startsWith(c.href + "/")));
+type Active = { group: number; href: string } | null;
+
+/** Where am I? The most specific menu link that matches the page (/news/films/x → «Filmlar», not «Yangiliklar»). */
+function findActive(pathname: string): Active {
+  let best: Active = null;
+  let len = 0;
+  SITE_NAV.forEach((group, g) =>
+    group.children.forEach((c) => {
+      const href = c.href.split("#")[0];
+      const hit = pathname === href || (href !== "/" && pathname.startsWith(href + "/"));
+      if (hit && href.length > len) {
+        best = { group: g, href: c.href };
+        len = href.length;
+      }
+    }),
+  );
+  return best;
 }
 
-export function SiteHeader({ phone }: { phone?: string }) {
+/** `waitForIntro`: on the home page the header slides in only after the preloader and hero intro. */
+export function SiteHeader({ phone, catalog, waitForIntro = false }: { phone?: string; catalog?: string; waitForIntro?: boolean }) {
+  const catalogUrl = catalog || CATALOG_URL;
+  const intro = useIntroDone();
+  const ready = !waitForIntro || intro;
   const [pathname, setPathname] = useState("");
+  const active = useMemo(() => findActive(pathname), [pathname]);
   const lenis = useLenis();
   const user = useSession();
   const staff = user?.is_staff ? user : null;
@@ -53,10 +76,18 @@ export function SiteHeader({ phone }: { phone?: string }) {
     setSearchOpen(false);
   }, []);
 
+  // lock the page while a full-screen menu is open — and only release a lock we took ourselves
+  // (on the home page the preloader holds its own lock until the intro has played)
+  const lockedByMenu = useRef(false);
   useEffect(() => {
     if (!lenis) return;
-    if (mobile || searchOpen) lenis.stop();
-    else lenis.start();
+    if (mobile || searchOpen) {
+      lenis.stop();
+      lockedByMenu.current = true;
+    } else if (lockedByMenu.current) {
+      lenis.start();
+      lockedByMenu.current = false;
+    }
   }, [mobile, searchOpen, lenis]);
 
   useEffect(() => {
@@ -90,7 +121,7 @@ export function SiteHeader({ phone }: { phone?: string }) {
       </Suspense>
       <motion.header
         initial={{ y: -100, opacity: 0 }}
-        animate={{ y: hidden && open === null && !mobile ? -120 : 0, opacity: 1 }}
+        animate={ready ? { y: hidden && open === null && !mobile ? -120 : 0, opacity: 1 } : { y: -120, opacity: 0 }}
         transition={{ duration: 0.8, ease }}
         className="fixed inset-x-0 top-0 z-50 px-3 pt-3 md:px-6 md:pt-4"
       >
@@ -112,13 +143,24 @@ export function SiteHeader({ phone }: { phone?: string }) {
                   href={group.href}
                   data-cursor="hover"
                   aria-expanded={open === i}
+                  aria-current={active?.group === i ? "true" : undefined}
                   className={cn(
-                    "flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-2 text-[15px] font-semibold transition-colors 2xl:px-3.5",
-                    isActive(pathname, group) ? "text-turq" : "text-ivory/85 hover:text-ivory",
+                    "relative flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-2 text-[15px] transition-colors 2xl:px-3.5",
+                    active?.group === i ? "font-bold text-turq" : "font-semibold text-ivory/85 hover:text-ivory",
                   )}
                 >
-                  {group.label}
-                  <ChevronDown className={cn("size-4 transition-transform duration-500", open === i && "rotate-180")} />
+                  {/* the section you are in: a soft pill + a bar under the label, sliding along when you move on */}
+                  {active?.group === i && (
+                    <motion.span
+                      layoutId="nav-active"
+                      className="absolute inset-0 rounded-full bg-turq/12"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    >
+                      <span className="absolute inset-x-4 -bottom-1 h-0.5 rounded-full bg-turq" />
+                    </motion.span>
+                  )}
+                  <span className="relative">{group.label}</span>
+                  <ChevronDown className={cn("relative size-4 transition-transform duration-500", open === i && "rotate-180")} />
                 </Link>
               </div>
             ))}
@@ -134,6 +176,25 @@ export function SiteHeader({ phone }: { phone?: string }) {
             >
               <Search className="size-[18px]" />
             </button>
+            <a
+              href={catalogUrl}
+              target="_blank"
+              rel="noreferrer"
+              data-cursor="hover"
+              title="Made in Samarkand — viloyat mahsulotlari elektron katalogi"
+              aria-label="Katalog: Made in Samarkand"
+              className={cn(
+                "group hidden h-10 items-center gap-2 rounded-full border border-gold/45 bg-gold/10 pl-3.5 pr-1.5 text-sm font-semibold text-gold transition-colors duration-300 hover:bg-gold hover:text-ink md:inline-flex",
+                // 1280–1399px: the full menu leaves room for the icon only
+                "xl:max-[1399px]:w-10 xl:max-[1399px]:justify-center xl:max-[1399px]:px-0",
+              )}
+            >
+              <BookOpen className="size-4" />
+              <span className="xl:max-[1399px]:hidden">Katalog</span>
+              <span className="grid size-7 place-items-center rounded-full bg-gold/15 transition-transform duration-500 ease-expo group-hover:rotate-45 group-hover:bg-ink/10 xl:max-[1399px]:hidden">
+                <ArrowUpRight className="size-3.5" />
+              </span>
+            </a>
             <ThemeToggle />
             {staff && <AdminQuick user={staff} className="hidden sm:block" />}
             <AccountButton user={user} />
@@ -195,31 +256,45 @@ export function SiteHeader({ phone }: { phone?: string }) {
                       </Link>
                     </div>
                     <ul className="col-span-9 grid grid-cols-3 gap-2">
-                      {SITE_NAV[open].children.map(({ label, href, desc, icon: Icon }, j) => (
-                        <motion.li
-                          key={href + label}
-                          initial={{ opacity: 0, y: 14 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.04 * j, duration: 0.45, ease }}
-                        >
-                          <Link
-                            href={href}
-                            data-cursor="hover"
-                            className={cn(
-                              "group flex h-full items-start gap-4 rounded-2xl p-4 transition-colors hover:bg-ivory/[0.06]",
-                              pathname === href && "bg-turq/10",
-                            )}
+                      {SITE_NAV[open].children.map(({ label, href, desc, icon: Icon }, j) => {
+                        const here = active?.group === open && active.href === href;
+                        return (
+                          <motion.li
+                            key={href + label}
+                            initial={{ opacity: 0, y: 14 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.04 * j, duration: 0.45, ease }}
                           >
-                            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-turq/12 text-turq transition-transform duration-500 ease-expo group-hover:-rotate-6 group-hover:scale-110">
-                              <Icon className="size-5" />
-                            </span>
-                            <span>
-                              <span className="block text-base font-semibold text-ivory">{label}</span>
-                              {desc && <span className="mt-1 block text-sm text-ivory/70">{desc}</span>}
-                            </span>
-                          </Link>
-                        </motion.li>
-                      ))}
+                            <Link
+                              href={href}
+                              data-cursor="hover"
+                              aria-current={here ? "page" : undefined}
+                              className={cn(
+                                "group flex h-full items-start gap-4 rounded-2xl p-4 transition-colors",
+                                here ? "bg-turq/12 ring-1 ring-turq/45" : "hover:bg-ivory/[0.06]",
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  "grid size-11 shrink-0 place-items-center rounded-xl transition-transform duration-500 ease-expo group-hover:-rotate-6 group-hover:scale-110",
+                                  here ? "bg-turq text-ink" : "bg-turq/12 text-turq",
+                                )}
+                              >
+                                <Icon className="size-5" />
+                              </span>
+                              <span>
+                                <span className={cn("block text-base", here ? "font-bold text-turq" : "font-semibold text-ivory")}>{label}</span>
+                                {desc && <span className="mt-1 block text-sm text-ivory/70">{desc}</span>}
+                                {here && (
+                                  <span className="mt-2 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-turq">
+                                    <span className="size-1.5 rounded-full bg-turq" /> Siz shu yerdasiz
+                                  </span>
+                                )}
+                              </span>
+                            </Link>
+                          </motion.li>
+                        );
+                      })}
                     </ul>
                   </motion.div>
                 </AnimatePresence>
@@ -233,6 +308,8 @@ export function SiteHeader({ phone }: { phone?: string }) {
       <AnimatePresence>
         {mobile && (
           <MobileMenu
+            active={active}
+            catalog={catalogUrl}
             phone={phone}
             user={user ?? null}
             onClose={() => setMobile(false)}
@@ -282,9 +359,26 @@ function AccountButton({ user }: { user: SessionUser | null | undefined }) {
   );
 }
 
-function MobileMenu({ phone, user, onClose, onSearch }: { phone?: string; user: SessionUser | null; onClose: () => void; onSearch: () => void }) {
+function MobileMenu({
+  active,
+  catalog,
+  phone,
+  user,
+  onClose,
+  onSearch,
+}: {
+  active: Active;
+  catalog: string;
+  phone?: string;
+  user: SessionUser | null;
+  onClose: () => void;
+  onSearch: () => void;
+}) {
   const staff = !!user?.is_staff;
-  const [expanded, setExpanded] = useState<number | null>(0);
+  // the section you are in stays open until the visitor picks another one (the route may only be known a moment
+  // after the menu opens, so this follows it instead of being fixed when the menu mounts)
+  const [picked, setPicked] = useState<number | null | undefined>(undefined);
+  const expanded = picked === undefined ? (active?.group ?? 0) : picked;
   return (
     <motion.div
       className="fixed inset-0 z-40 overflow-y-auto bg-ink px-5 pb-10 pt-24 xl:hidden"
@@ -301,6 +395,24 @@ function MobileMenu({ phone, user, onClose, onSearch }: { phone?: string; user: 
       >
         <Search className="size-5 text-turq" /> Saytdan qidirish…
       </button>
+      <motion.a
+        href={catalog}
+        target="_blank"
+        rel="noreferrer"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.6, ease }}
+        className="mb-6 flex items-center gap-4 rounded-2xl border border-gold/40 bg-gold/10 p-4"
+      >
+        <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-gold text-ink">
+          <BookOpen className="size-6" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-lg font-bold text-gold">Made in Samarkand</span>
+          <span className="block text-[15px] text-ivory/75">Elektron katalog · 406 korxona</span>
+        </span>
+        <ArrowUpRight className="size-6 shrink-0 text-gold" />
+      </motion.a>
       <nav className="flex flex-col divide-y divide-ivory/10 border-y border-ivory/10">
         {SITE_NAV.map((group, i) => (
           <motion.div
@@ -311,11 +423,17 @@ function MobileMenu({ phone, user, onClose, onSearch }: { phone?: string; user: 
           >
             <button
               type="button"
-              onClick={() => setExpanded(expanded === i ? null : i)}
-              className="flex w-full items-center justify-between py-5 text-left font-display text-2xl font-semibold"
+              onClick={() => setPicked(expanded === i ? null : i)}
+              className={cn(
+                "flex w-full items-center justify-between py-5 text-left font-display text-2xl",
+                active?.group === i ? "font-bold text-turq" : "font-semibold",
+              )}
               aria-expanded={expanded === i}
             >
-              {group.label}
+              <span className="flex items-center gap-3">
+                {active?.group === i && <span className="size-2 rounded-full bg-turq" aria-hidden />}
+                {group.label}
+              </span>
               <ChevronDown className={cn("size-6 transition-transform duration-500", expanded === i && "rotate-180")} />
             </button>
             <AnimatePresence initial={false}>
@@ -327,13 +445,25 @@ function MobileMenu({ phone, user, onClose, onSearch }: { phone?: string; user: 
                   transition={{ duration: 0.45, ease }}
                   className="overflow-hidden"
                 >
-                  {group.children.map(({ label, href, icon: Icon }) => (
-                    <li key={href + label}>
-                      <Link href={href} onClick={onClose} className="flex items-center gap-3 py-3 pl-1 text-lg text-ivory/90">
-                        <Icon className="size-5 text-turq" /> {label}
-                      </Link>
-                    </li>
-                  ))}
+                  {group.children.map(({ label, href, icon: Icon }) => {
+                    const here = active?.group === i && active.href === href;
+                    return (
+                      <li key={href + label}>
+                        <Link
+                          href={href}
+                          onClick={onClose}
+                          aria-current={here ? "page" : undefined}
+                          className={cn(
+                            "flex items-center gap-3 rounded-xl py-3 pl-1 text-lg",
+                            here ? "bg-turq/12 pl-3 font-bold text-turq" : "text-ivory/90",
+                          )}
+                        >
+                          <Icon className="size-5 text-turq" /> {label}
+                          {here && <span className="ml-auto mr-3 font-mono text-[11px] uppercase tracking-[0.16em]">Shu yerda</span>}
+                        </Link>
+                      </li>
+                    );
+                  })}
                   <li className="h-3" />
                 </motion.ul>
               )}

@@ -1,7 +1,8 @@
 import { SmoothScroll } from "@/components/providers/smooth-scroll";
 import { Preloader } from "@/components/preloader";
-import { Cursor } from "@/components/cursor";
-import { Header } from "@/components/header";
+import { SiteHeader } from "@/components/site/site-header";
+import { SiteFooter } from "@/components/site/site-footer";
+import { api } from "@/lib/api/server";
 import { Hero } from "@/components/sections/hero";
 import { Marquee } from "@/components/sections/marquee";
 import { Manifesto } from "@/components/sections/manifesto";
@@ -16,14 +17,16 @@ import { Membership } from "@/components/sections/membership";
 import { Heritage } from "@/components/sections/heritage";
 import { ZoomReveal } from "@/components/sections/zoom-reveal";
 import { Cta } from "@/components/sections/cta";
-import { Footer } from "@/components/sections/footer";
+import { OffscreenPause } from "@/components/offscreen-pause";
+import { HeadingReveal } from "@/components/heading-reveal";
 
-export default function Home() {
+export default async function Home() {
+  // same header and footer as every inner page (real menu links, contacts); the header waits for the intro
+  const settings = await api.settings();
   return (
     <SmoothScroll startStopped>
       <Preloader />
-      <Cursor />
-      <Header />
+      <SiteHeader phone={settings?.phone} catalog={settings?.catalog_url} waitForIntro />
       <main>
         <Hero />
         <Marquee />
@@ -40,7 +43,9 @@ export default function Home() {
         <ZoomReveal />
         <Cta />
       </main>
-      <Footer />
+      <SiteFooter settings={settings} />
+      <HeadingReveal />
+      <OffscreenPause />
     </SmoothScroll>
   );
 }

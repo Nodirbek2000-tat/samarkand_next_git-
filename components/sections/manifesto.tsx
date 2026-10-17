@@ -1,29 +1,31 @@
 "use client";
 
 import { useRef } from "react";
-import { MessagesSquare, LineChart, Landmark, Rocket } from "lucide-react";
+import { Network, LineChart, Landmark, ShieldCheck } from "lucide-react";
 import { gsap, SplitText, useGSAP } from "@/lib/gsap";
+import { isLite } from "@/lib/perf";
 
+// the council's official goals (client document; the same text sits on /about)
 const CARDS = [
   {
-    icon: MessagesSquare,
-    title: "Konsultatsiyalar",
-    text: "Biznes yuritish va davlat organlari bilan ishlash bo‘yicha ekspert ko‘magi.",
+    icon: Network,
+    title: "Kooperatsiya",
+    text: "Viloyat korxonalari o‘rtasida kooperatsion aloqalarni rivojlantirish.",
   },
   {
     icon: LineChart,
-    title: "Tahlil",
-    text: "Sanoatchilar forumida lokalizatsiya, kooperatsiya va eksport muammolari muhokamasi.",
+    title: "Zamonaviy boshqaruv",
+    text: "Tadbirkorlik subyektlarida zamonaviy boshqaruv tamoyillarini joriy etish.",
   },
   {
     icon: Landmark,
-    title: "Muloqot",
-    text: "Viloyat hokimi va soha rahbarlari ishtirokidagi Kengash a’zolari yig‘ilishlari.",
+    title: "Sifatli davlat xizmati",
+    text: "Davlat muassasalari tomonidan biznesga sifatli xizmat ko‘rsatilishiga erishish.",
   },
   {
-    icon: Rocket,
-    title: "Loyihalarni qo‘llash",
-    text: "Kengash qarori bilan ijtimoiy, ilmiy va yoshlar startap loyihalarini moliyalashtirish.",
+    icon: ShieldCheck,
+    title: "Huquqlar himoyasi",
+    text: "Tadbirkorlarning qonuniy huquqlarini himoya qilish.",
   },
 ];
 
@@ -32,21 +34,25 @@ export function Manifesto() {
 
   useGSAP(
     () => {
-      SplitText.create("[data-manifesto]", {
-        type: "words",
-        autoSplit: true,
-        onSplit: (self) =>
-          gsap.fromTo(
-            self.words,
-            { opacity: 0.12 },
-            {
-              opacity: 1,
-              ease: "none",
-              stagger: 0.1,
-              scrollTrigger: { trigger: "[data-manifesto]", start: "top 80%", end: "bottom 45%", scrub: true },
-            },
-          ),
-      });
+      // weak machines: the text is simply there (lighting dozens of words per frame and turning the ring
+      // with the scroll repaint the screen on every frame)
+      const lite = isLite();
+      if (!lite)
+        SplitText.create("[data-manifesto]", {
+          type: "words",
+          autoSplit: true,
+          onSplit: (self) =>
+            gsap.fromTo(
+              self.words,
+              { opacity: 0.12 },
+              {
+                opacity: 1,
+                ease: "none",
+                stagger: 0.1,
+                scrollTrigger: { trigger: "[data-manifesto]", start: "top 80%", end: "bottom 45%", scrub: true },
+              },
+            ),
+        });
 
       gsap.from("[data-card]", {
         y: 80,
@@ -59,11 +65,12 @@ export function Manifesto() {
         scrollTrigger: { trigger: "[data-cards]", start: "top 85%" },
       });
 
-      gsap.to("[data-ring]", {
-        rotate: 180,
-        ease: "none",
-        scrollTrigger: { trigger: root.current, start: "top bottom", end: "bottom top", scrub: true },
-      });
+      if (!lite)
+        gsap.to("[data-ring]", {
+          rotate: 180,
+          ease: "none",
+          scrollTrigger: { trigger: root.current, start: "top bottom", end: "bottom top", scrub: true },
+        });
     },
     { scope: root },
   );
@@ -75,14 +82,14 @@ export function Manifesto() {
   };
 
   return (
-    <section ref={root} id="kengash" className="relative overflow-hidden bg-ink px-5 py-28 md:px-10 md:py-44">
+    <section ref={root} id="kengash" className="relative overflow-hidden bg-ink px-5 py-20 md:px-10 md:py-44">
       <svg
         data-ring
         viewBox="0 0 400 400"
         className="pointer-events-none absolute -right-40 top-10 size-[640px] opacity-[0.12] md:-right-20"
         fill="none"
-        stroke="#2ee8d6"
         strokeWidth="0.6"
+        style={{ stroke: "var(--color-turq)" }}
         aria-hidden
       >
         {Array.from({ length: 12 }).map((_, i) => (
@@ -103,12 +110,19 @@ export function Manifesto() {
           data-manifesto
           className="max-w-[22ch] font-display text-[9vw] font-medium leading-[1.02] tracking-[-0.03em] md:max-w-[26ch] md:text-[5.2vw]"
         >
-          Biz tadbirkorlarni <span className="text-turq">birlashtiramiz</span>, biznes muhitini birga rivojlantiramiz va
-          ishbilarmonlar manfaatlarini <span className="text-gold">himoya qilamiz</span> — mintaqaning ertangi kuni
-          uchun.
+          Biz mintaqaning biznes va investitsiya muhitini <span className="font-accent text-turq">yaxshilashga</span>, jamiyatda
+          tadbirkorlar nufuzini <span className="font-accent text-gold">mustahkamlashga</span> va korxonalarning barqaror
+          rivojlanishiga hissa qo‘shamiz.
         </p>
 
-        <div data-cards className="mt-24 grid gap-4 [perspective:1200px] sm:grid-cols-2 lg:grid-cols-4">
+        {/* the council's slogan */}
+        <p className="mt-10 flex flex-wrap items-baseline gap-x-4 gap-y-1 md:mt-12">
+          <span className="font-mono text-[12px] uppercase tracking-[0.22em] text-mist">Shior</span>
+          <span className="font-accent text-2xl text-gold md:text-3xl">Tadbirkorlikni jadal rivojlantirish sari birgamiz.</span>
+        </p>
+
+        <p className="mt-14 font-mono text-[12px] uppercase tracking-[0.22em] text-mist md:mt-20">Maqsadlarimiz</p>
+        <div data-cards className="mt-5 grid gap-4 [perspective:1200px] sm:grid-cols-2 xl:grid-cols-4">
           {CARDS.map(({ icon: Icon, title, text }, i) => (
             <article
               key={title}
@@ -124,7 +138,7 @@ export function Manifesto() {
                 </span>
                 <span className="font-mono text-[12.5px] text-mist">0{i + 1}</span>
               </div>
-              <h3 className="relative mt-16 font-display text-xl font-semibold">{title}</h3>
+              <h3 className="relative mt-10 font-display text-xl font-semibold">{title}</h3>
               <p className="relative mt-3 text-sm leading-relaxed text-ivory/80">{text}</p>
             </article>
           ))}

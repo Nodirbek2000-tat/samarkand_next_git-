@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ArrowLeft, ArrowUpRight, CalendarDays, Camera, Download, FileText, Globe, PlayCircle, Send, Wallet } from "lucide-react";
+import { SiyobRiver } from "@/components/projects/siyob-river";
 import { Cover } from "@/components/site/cover";
 import { PhotoGrid } from "@/components/site/lightbox";
 import { Reveal } from "@/components/site/reveal";
@@ -12,6 +13,9 @@ import { Container, Pill, RichText, SectionTitle } from "@/components/site/ui";
 import { ProfileSkeleton } from "@/components/site/person-profile";
 import { api } from "@/lib/api/server";
 import { formatBytes, formatDate, stripHtml, youtubeEmbed } from "@/lib/format";
+
+// projects with a story of their own get an extra section after the key numbers
+const EXTRAS: Record<string, React.ComponentType> = { "siyob-canal": SiyobRiver };
 
 export async function generateMetadata({ params }: PageProps<"/projects/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -33,6 +37,7 @@ async function ProjectDetail({ params }: { params: Promise<{ slug: string }> }) 
   if (!p) notFound();
   const related = (all?.results ?? []).filter((x) => x.id !== p.id && (x.category === p.category || x.status === p.status)).slice(0, 3);
   const video = p.video_url ? youtubeEmbed(p.video_url) : null;
+  const Extra = EXTRAS[p.slug];
   const links = [
     p.website_url && { href: p.website_url, label: "Veb-sayt", icon: Globe },
     p.telegram_url && { href: p.telegram_url, label: "Telegram kanal", icon: Send },
@@ -69,6 +74,8 @@ async function ProjectDetail({ params }: { params: Promise<{ slug: string }> }) 
           <StatsStrip stats={p.stats} />
         </Container>
       )}
+
+      {Extra && <Extra />}
 
       <Container className="py-10 md:py-12">
         <div className="grid gap-12 lg:grid-cols-12">

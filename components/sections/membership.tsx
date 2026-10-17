@@ -4,12 +4,14 @@ import { useRef } from "react";
 import { Check, Crown } from "lucide-react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { useLenis } from "@/components/providers/smooth-scroll";
+import { useCoverflow, SwipeHint } from "@/components/coverflow";
+import { Roll } from "@/components/roll";
 
 const TIERS = [
-  { name: "YaTT va jismoniy shaxslar", fee: "5", note: "Yakka tartibdagi tadbirkorlar", accent: "#2ee8d6" },
-  { name: "Kichik korxonalar", fee: "10", note: "Yillik savdo 10 mlrd so‘mgacha", accent: "#3b5bff" },
-  { name: "O‘rta korxonalar", fee: "25", note: "Yillik savdo 10 mlrd so‘mdan ortiq", accent: "#ff7847" },
-  { name: "Yirik korxonalar", fee: "50", note: "Yillik savdo 100 mlrd so‘mdan ortiq", accent: "#f3c46b", featured: true },
+  { name: "YaTT va jismoniy shaxslar", fee: "5", note: "Yakka tartibdagi tadbirkorlar", accent: "var(--color-turq)" },
+  { name: "Kichik korxonalar", fee: "10", note: "Yillik savdo 10 mlrd so‘mgacha", accent: "var(--color-lapis)" },
+  { name: "O‘rta korxonalar", fee: "25", note: "Yillik savdo 10 mlrd so‘mdan ortiq", accent: "var(--color-ember)" },
+  { name: "Yirik korxonalar", fee: "50", note: "Yillik savdo 100 mlrd so‘mdan ortiq", accent: "var(--color-gold)", featured: true },
 ];
 
 const BENEFITS = [
@@ -22,19 +24,35 @@ const BENEFITS = [
 
 export function Membership() {
   const root = useRef<HTMLElement>(null);
+  const tiers = useRef<HTMLDivElement>(null);
   const lenis = useLenis();
+  useCoverflow(tiers);
 
   useGSAP(
     () => {
-      gsap.from("[data-tier]", {
-        y: 120,
-        rotateY: -35,
-        rotateX: 12,
-        opacity: 0,
-        stagger: 0.12,
-        duration: 1.4,
-        ease: "expo.out",
-        scrollTrigger: { trigger: "[data-tiers]", start: "top 80%" },
+      const mm = gsap.matchMedia();
+      mm.add("(min-width: 768px)", () => {
+        gsap.from("[data-tier]", {
+          y: 120,
+          rotateY: -35,
+          rotateX: 12,
+          opacity: 0,
+          stagger: 0.12,
+          duration: 1.4,
+          ease: "expo.out",
+          scrollTrigger: { trigger: "[data-tiers]", start: "top 80%" },
+        });
+      });
+      // phones: the tiers are a swipe carousel (coverflow owns each card's transform) — the row flies in
+      mm.add("(max-width: 767px)", () => {
+        gsap.from(tiers.current, {
+          xPercent: 50,
+          rotate: 4,
+          opacity: 0,
+          duration: 1.4,
+          ease: "expo.out",
+          scrollTrigger: { trigger: tiers.current, start: "top 88%" },
+        });
       });
       gsap.from("[data-benefit]", {
         opacity: 0,
@@ -44,11 +62,14 @@ export function Membership() {
         ease: "expo.out",
         scrollTrigger: { trigger: "[data-benefits]", start: "top 85%" },
       });
+      return () => mm.revert();
     },
     { scope: root },
   );
 
+  // mouse-only foil tilt (touch would fight the phone carousel swipe)
   const move = (e: React.PointerEvent<HTMLElement>) => {
+    if (e.pointerType !== "mouse" || window.innerWidth < 768) return;
     const el = e.currentTarget;
     const r = el.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width;
@@ -58,21 +79,23 @@ export function Membership() {
     el.style.setProperty("--angle", `${px * 180 + py * 90}deg`);
     gsap.to(el, { rotateY: (px - 0.5) * 16, rotateX: -(py - 0.5) * 16, duration: 0.5, ease: "power3" });
   };
-  const leave = (e: React.PointerEvent<HTMLElement>) =>
+  const leave = (e: React.PointerEvent<HTMLElement>) => {
+    if (e.pointerType !== "mouse" || window.innerWidth < 768) return;
     gsap.to(e.currentTarget, { rotateX: 0, rotateY: 0, duration: 1.2, ease: "elastic.out(1, 0.4)" });
+  };
 
   return (
-    <section ref={root} id="azolik" className="relative overflow-hidden bg-ink px-5 py-28 md:px-10 md:py-40">
-      <div className="pointer-events-none absolute right-0 top-0 size-[600px] rounded-full bg-gold/10 blur-[160px]" />
+    <section ref={root} id="azolik" className="relative overflow-hidden bg-ink px-5 py-20 md:px-10 md:py-40">
+      <div className="pointer-events-none absolute -right-60 -top-60 size-[1000px] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--color-gold)_12%,transparent),transparent_62%)]" />
       <div className="relative mx-auto max-w-[1600px]">
-        <div className="mb-16 flex flex-col justify-between gap-8 md:flex-row md:items-end">
+        <div className="mb-6 flex flex-col justify-between gap-6 md:mb-16 md:flex-row md:items-end md:gap-8">
           <div>
             <div className="mb-8 flex items-center gap-4 font-mono text-[12.5px] uppercase tracking-[0.22em] text-mist">
               <span className="text-turq">08</span>
               <span className="h-px w-16 bg-ivory/20" />
               Kengashga a’zolik
             </div>
-            <h2 className="font-display text-5xl font-semibold uppercase leading-[0.95] tracking-[-0.03em] md:text-8xl">
+            <h2 className="font-display text-[min(12.4vw,3rem)] font-semibold uppercase leading-[0.95] tracking-[-0.03em] md:text-8xl">
               Jamoaga
               <br />
               <span className="text-gradient">qo‘shiling</span>
@@ -84,7 +107,7 @@ export function Membership() {
           </p>
         </div>
 
-        <div data-tiers className="grid gap-4 [perspective:1400px] sm:grid-cols-2 xl:grid-cols-4">
+        <div ref={tiers} data-tiers className="rail grid gap-4 [perspective:1400px] sm:grid-cols-2 xl:grid-cols-4">
           {TIERS.map((t) => (
             <article
               key={t.name}
@@ -92,7 +115,7 @@ export function Membership() {
               data-cursor="hover"
               onPointerMove={move}
               onPointerLeave={leave}
-              className="group relative isolate flex min-h-[420px] flex-col justify-between overflow-hidden rounded-[2rem] border border-ivory/10 bg-ink-2 p-8 [transform-style:preserve-3d]"
+              className="group relative isolate flex min-h-[340px] flex-col justify-between overflow-hidden rounded-[2rem] md:min-h-[420px] border border-ivory/10 bg-ink-2 p-8 [transform-style:preserve-3d]"
               style={{ "--accent": t.accent } as React.CSSProperties}
             >
               {/* holographic foil */}
@@ -110,7 +133,8 @@ export function Membership() {
               <div className="flex items-start justify-between [transform:translateZ(30px)]">
                 <span
                   className="rounded-full border px-3 py-1 font-mono text-[11.5px] uppercase tracking-[0.15em]"
-                  style={{ borderColor: t.accent, color: t.accent }}
+                  // text: accent pulled toward the text colour so the deep lapis stays readable on both themes
+                  style={{ borderColor: t.accent, color: `color-mix(in oklab, ${t.accent} 72%, var(--color-ivory))` }}
                 >
                   {t.featured ? "Premium" : "A’zolik"}
                 </span>
@@ -128,6 +152,7 @@ export function Membership() {
             </article>
           ))}
         </div>
+        <SwipeHint className="md:hidden" />
 
         <div className="mt-6 grid gap-6 lg:grid-cols-12">
           <div className="relative overflow-hidden rounded-[2rem] border border-gold/30 bg-gradient-to-br from-gold/15 via-ink-2 to-ink-2 p-8 lg:col-span-4">
@@ -143,7 +168,7 @@ export function Membership() {
               onClick={() => lenis?.scrollTo("#aloqa", { duration: 1.8 })}
               className="mt-8 inline-flex h-12 items-center rounded-full bg-ivory px-6 font-mono text-[12.5px] uppercase tracking-[0.18em] text-ink transition-colors hover:bg-gold"
             >
-              Ariza yuborish
+              <Roll>Ariza yuborish</Roll>
             </button>
           </div>
           <ul data-benefits className="grid gap-3 sm:grid-cols-2 lg:col-span-8">
@@ -151,7 +176,7 @@ export function Membership() {
               <li
                 key={b}
                 data-benefit
-                className="flex items-start gap-4 rounded-2xl border border-ivory/10 bg-ink-2/60 p-5 leading-relaxed text-ivory/90"
+                className="flex items-start gap-4 rounded-2xl border border-ivory/10 bg-ink-2/60 p-4 leading-relaxed text-ivory/90 md:p-5"
               >
                 <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-turq/15 text-turq">
                   <Check className="size-4" />

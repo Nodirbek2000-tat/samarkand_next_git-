@@ -1,9 +1,0 @@
-# HTTP rejimi (domen/SSL hali yo‘q): asosiy docker-compose.yml ustiga qo‘shiladi.
-# Yoqish uchun .env da:  COMPOSE_FILE=docker-compose.yml:docker-compose.http.yml
-# SSL'ni yoqish uchun shu qatorni .env dan olib tashlang va qayta: docker compose up -d
-
-services:
-  nginx:
-    image: nginx:1.31-alpine
-    volumes:
-      - ./nginx/http:/etc/nginx/conf.d:ro

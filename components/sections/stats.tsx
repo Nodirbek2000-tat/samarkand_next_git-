@@ -38,12 +38,12 @@ export function Stats() {
   );
 
   return (
-    <section ref={root} className="relative bg-ink px-5 pb-28 md:px-10 md:pb-40">
+    <section ref={root} className="relative bg-ink px-5 pb-20 md:px-10 md:pb-40">
       <div className="mx-auto grid max-w-[1600px] border-t border-l border-ivory/10 sm:grid-cols-2 lg:grid-cols-4">
         {STATS.map((s) => (
           <div key={s.label} data-stat className="group relative border-b border-r border-ivory/10 p-8 md:p-10">
             <svg viewBox="0 0 100 100" className="absolute right-6 top-6 size-16 -rotate-90 md:size-20" aria-hidden>
-              <circle cx="50" cy="50" r="46" fill="none" stroke="rgb(244 239 228 / 0.08)" strokeWidth="2" />
+              <circle cx="50" cy="50" r="46" fill="none" style={{ stroke: "color-mix(in oklab, var(--color-ivory) 12%, transparent)" }} strokeWidth="2" />
               <circle
                 data-arc={s.ratio}
                 cx="50"
@@ -58,8 +58,8 @@ export function Stats() {
               />
               <defs>
                 <linearGradient id="stat-g" x1="0" x2="1">
-                  <stop offset="0" stopColor="#2ee8d6" />
-                  <stop offset="1" stopColor="#f3c46b" />
+                  <stop offset="0" style={{ stopColor: "var(--color-turq)" }} />
+                  <stop offset="1" style={{ stopColor: "var(--color-gold)" }} />
                 </linearGradient>
               </defs>
             </svg>

@@ -13,6 +13,30 @@ export const metadata: Metadata = {
   description: "«Yangi Samarqand» tadbirkorlar jamoat fondi: missiya, maqsadlar, vizyon va qadriyatlar.",
 };
 
+// how the council began (client document: «Kengash — faoliyat boshlanishi»); it leads into the registration text below
+const BEGINNING = [
+  {
+    when: "2021-yil 22-iyun",
+    title: "Hokim bilan uchrashuv",
+    text: "Yetakchi tadbirkorlar viloyat hokimi Erkinjon Turdimov bilan biznes muhitini yaxshilash va tadbirkorlik yo‘lidagi muammolarni muhokama qildi. Bunday uchrashuvlarni muntazam, «davra suhbati» va «galstuksiz» formatda o‘tkazish taklif etildi.",
+  },
+  {
+    when: "Uchrashuv formati",
+    title: "Ikki oyda bir marta",
+    text: "Uchrashuvlar yetakchi korxonalardan birida o‘tadi, mas’ul rahbarlar taklif etiladi, hokim topshiriqlarining ijrosi nazoratga olinadi.",
+  },
+  {
+    when: "Kengash raisi",
+    title: "Haydar O‘roqov",
+    text: "Ishtirokchilar Jamoat kengashi raisi etib Samarqand tumanidagi «NAVOBOD NASLLI PARRANDA» fermer xo‘jaligi rahbari Haydar Muhammadiyevich O‘roqovni sayladi.",
+  },
+  {
+    when: "Keyingi uchrashuvlar",
+    title: "Fond g‘oyasi",
+    text: "Yosh tadbirkorlarni moliyaviy qo‘llab-quvvatlash, ilmiy ishlanmalarni joriy etish, yoshlar startaplarini moliyalashtirish va ijtimoiy hayotni yaxshilash uchun fond tuzish taklif qilindi.",
+  },
+];
+
 const LINKS = [
   { href: "/about/history", title: "Tashkil topish tarixi", text: "2021-yildan bugungacha bosib o‘tilgan yo‘l" },
   { href: "/about/membership", title: "A’zolik", text: "Shartlar, badallar va ariza topshirish" },
@@ -35,9 +59,28 @@ export default async function AboutPage() {
         crumbs={[{ label: "Biz haqimizda" }]}
       />
 
+      <Container className="pb-4 pt-6 md:pb-6 md:pt-10">
+        <SectionTitle kicker="Kengash — faoliyat boshlanishi" title="Bir uchrashuvdan" highlight="boshlangan yo‘l" />
+        <Reveal
+          as="ol"
+          stagger={0.1}
+          className="relative grid gap-8 border-l border-ivory/15 pl-6 xl:grid-cols-4 xl:gap-8 xl:border-l-0 xl:border-t xl:pl-0 xl:pt-8"
+        >
+          {BEGINNING.map((s) => (
+            <li key={s.title} data-reveal-item className="relative">
+              <span className="absolute -left-[31px] top-1 size-3 rounded-full bg-gold ring-4 ring-ink xl:-top-[38px] xl:left-0" />
+              <p className="font-mono text-[12px] uppercase tracking-[0.18em] text-gold">{s.when}</p>
+              <h3 className="mt-2 font-display text-xl font-semibold leading-snug">{s.title}</h3>
+              <p className="mt-2 leading-relaxed text-ivory/80">{s.text}</p>
+            </li>
+          ))}
+        </Reveal>
+      </Container>
+
       <Container className="py-10 md:py-14">
         <div className="grid gap-12 lg:grid-cols-12">
           <Reveal className="lg:col-span-7">
+            <p className="mb-4 font-mono text-[12px] uppercase tracking-[0.18em] text-gold">2021-yil 1-dekabr</p>
             <RichText html={page?.body ?? ""} className="text-[1.3rem] md:text-[1.45rem]" />
           </Reveal>
           <Reveal className="relative hidden lg:col-span-4 lg:col-start-9 lg:block" delay={0.15}>

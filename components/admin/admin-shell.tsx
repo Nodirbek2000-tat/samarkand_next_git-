@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
+  Bot,
   ExternalLink,
   Inbox,
   LayoutDashboard,
@@ -89,6 +90,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       items: [
         { href: "/admin/inbox", label: "Kelgan murojaatlar", icon: Inbox, badge: inboxNew },
         { href: "/admin/users", label: "Foydalanuvchilar", icon: Users },
+        { href: "/admin/bot", label: "Telegram bot", icon: Bot },
         { href: "/admin/settings", label: "Sayt sozlamalari", icon: Settings },
       ],
     });

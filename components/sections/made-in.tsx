@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { ArrowUpRight, BookOpen, Languages, Factory, BadgeCheck, MapPin, Users } from "lucide-react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { Magnetic } from "@/components/magnetic";
+import { Roll } from "@/components/roll";
 
 const FIELDS = [
   { icon: Factory, label: "Tashkil etilgan sana va assortiment" },
@@ -38,7 +39,29 @@ export function MadeIn() {
           .from("[data-mi-chip]", { opacity: 0, y: 40, stagger: 0.04, duration: 0.3 }, 0.35)
           .to("[data-mi-num]", { yPercent: -18, duration: 0.5 }, 0.5);
       });
+      // phones: no pin (shorter page) — the number and the girih ring are scrubbed by the page scroll instead
       mm.add("(max-width: 767px)", () => {
+        gsap.fromTo(
+          "[data-mi-num]",
+          { scale: 0.4, opacity: 0.2, rotate: -6 },
+          {
+            scale: 1,
+            opacity: 1,
+            rotate: 0,
+            ease: "power2.out",
+            scrollTrigger: { trigger: "[data-mi-stage]", start: "top 90%", end: "center 55%", scrub: 1 },
+          },
+        );
+        gsap.fromTo(
+          "[data-mi-ring]",
+          { rotate: -120, scale: 0.6 },
+          {
+            rotate: 120,
+            scale: 1.25,
+            ease: "none",
+            scrollTrigger: { trigger: "[data-mi-stage]", start: "top bottom", end: "bottom top", scrub: true },
+          },
+        );
         gsap.from("[data-mi-chip]", {
           opacity: 0,
           y: 30,
@@ -63,21 +86,21 @@ export function MadeIn() {
 
   return (
     <section ref={root} id="made-in" className="relative bg-ink">
-      <div data-mi-stage className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-5 py-24 md:px-10">
+      <div data-mi-stage className="relative flex min-h-[78svh] flex-col items-center justify-center overflow-hidden px-5 py-16 md:min-h-svh md:px-10 md:py-24">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgb(243_196_107/0.16),transparent_60%)]" />
         <svg
           data-mi-ring
           viewBox="0 0 400 400"
           className="pointer-events-none absolute size-[110vmin] opacity-30"
           fill="none"
-          stroke="#f3c46b"
           strokeWidth="0.5"
+          style={{ stroke: "var(--color-gold)" }}
           aria-hidden
         >
           {Array.from({ length: 24 }).map((_, i) => (
             <rect key={i} x="80" y="80" width="240" height="240" transform={`rotate(${i * 3.75} 200 200)`} opacity={0.3 + (i % 3) * 0.2} />
           ))}
-          <circle cx="200" cy="200" r="196" stroke="#2ee8d6" />
+          <circle cx="200" cy="200" r="196" style={{ stroke: "var(--color-turq)" }} />
         </svg>
 
         <div className="relative mb-6 flex items-center gap-4 font-mono text-[12.5px] uppercase tracking-[0.22em] text-mist">
@@ -95,12 +118,12 @@ export function MadeIn() {
           korxona — bitta katalogda. Samarqandda ishlab chiqarilgan mahsulotlarni butun dunyo bilsin.
         </p>
 
-        <div data-mi-chips className="relative mt-12 flex max-w-4xl flex-wrap justify-center gap-2.5">
+        <div data-mi-chips className="relative mt-8 flex max-w-4xl flex-wrap justify-center gap-2 md:mt-12 md:gap-2.5">
           {SECTORS.map((s) => (
             <span
               key={s}
               data-mi-chip
-              className="glass rounded-full px-4 py-2 font-mono text-[12px] uppercase tracking-[0.12em] text-ivory/90"
+              className="glass rounded-full px-3 py-1.5 font-mono text-[11.5px] uppercase tracking-[0.12em] text-ivory/90 md:px-4 md:py-2 md:text-[12px]"
             >
               {s}
             </span>
@@ -108,7 +131,7 @@ export function MadeIn() {
         </div>
       </div>
 
-      <div className="relative mx-auto grid max-w-[1600px] gap-6 px-5 pb-28 md:px-10 md:pb-40 lg:grid-cols-12">
+      <div className="relative mx-auto grid max-w-[1600px] gap-6 px-5 pb-20 md:px-10 md:pb-40 lg:grid-cols-12">
         <div className="lg:col-span-5">
           <h3 className="font-display text-4xl font-semibold uppercase leading-tight tracking-tight md:text-5xl">
             Viloyatda <span className="text-gold">6 mingdan ortiq</span> sanoat korxonasi bor
@@ -133,7 +156,7 @@ export function MadeIn() {
               data-cursor="hover"
               className="group inline-flex h-14 items-center gap-3 rounded-full bg-gold pl-7 pr-2 font-mono text-[12.5px] uppercase tracking-[0.18em] text-ink"
             >
-              Katalogni ochish
+              <Roll>Katalogni ochish</Roll>
               <span className="grid size-10 place-items-center rounded-full bg-ink text-gold transition-transform duration-500 ease-expo group-hover:rotate-45">
                 <ArrowUpRight className="size-4" />
               </span>
@@ -141,20 +164,20 @@ export function MadeIn() {
           </Magnetic>
         </div>
 
-        <div data-mi-fields className="grid gap-4 [perspective:1000px] sm:grid-cols-2 lg:col-span-7">
+        <div data-mi-fields className="grid grid-cols-2 gap-3 [perspective:1000px] md:gap-4 lg:col-span-7">
           {FIELDS.map(({ icon: Icon, label }, i) => (
             <div
               key={label}
               data-mi-field
-              className="group relative overflow-hidden rounded-3xl border border-ivory/10 bg-ink-2 p-7 transition-colors duration-500 hover:border-gold/50"
+              className="group relative overflow-hidden rounded-3xl border border-ivory/10 bg-ink-2 p-5 transition-colors duration-500 hover:border-gold/50 md:p-7"
             >
               <div className="absolute inset-0 translate-y-full bg-gradient-to-t from-gold/15 to-transparent transition-transform duration-700 ease-expo group-hover:translate-y-0" />
               <div className="relative flex items-center justify-between">
                 <Icon className="size-6 text-gold" />
                 <span className="font-mono text-[12px] text-mist">0{i + 1}</span>
               </div>
-              <p className="relative mt-14 font-display text-xl font-semibold">{label}</p>
-              <p className="relative mt-2 text-sm text-ivory/75">Har bir korxona bo‘yicha katalogda</p>
+              <p className="relative mt-8 font-display text-base font-semibold leading-snug md:mt-14 md:text-xl">{label}</p>
+              <p className="relative mt-2 hidden text-sm text-ivory/75 sm:block">Har bir korxona bo‘yicha katalogda</p>
             </div>
           ))}
         </div>

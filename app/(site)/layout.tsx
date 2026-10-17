@@ -9,7 +9,7 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
   return (
     <SmoothScroll>
       <RouteEffects />
-      <SiteHeader phone={settings?.phone} />
+      <SiteHeader phone={settings?.phone} catalog={settings?.catalog_url} />
       <main id="main" className="min-h-svh">
         {children}
       </main>

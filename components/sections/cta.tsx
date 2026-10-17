@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowUpRight, CheckCircle2, Clock, Mail, MapPin, Phone } from "lucide-react";
 import { gsap, SplitText, useGSAP } from "@/lib/gsap";
 import { Magnetic } from "@/components/magnetic";
+import { Roll } from "@/components/roll";
 import { cn } from "@/lib/utils";
 
 const EMAIL = "info@yangisamarqand.uz";
@@ -119,6 +120,7 @@ export function Cta() {
           </span>
           <h2
             data-cta-title
+            data-no-reveal
             className="font-display text-[12vw] font-bold uppercase leading-[0.9] tracking-[-0.04em] md:text-[8.5vw]"
           >
             Kelajakni
@@ -182,7 +184,7 @@ export function Cta() {
                     onClick={() => setSent(false)}
                     className="mt-8 rounded-full border border-ivory/20 px-6 py-3 font-mono text-[12.5px] uppercase tracking-[0.18em] hover:border-turq hover:text-turq"
                   >
-                    Yana yozish
+                    <Roll>Yana yozish</Roll>
                   </button>
                 </motion.div>
               ) : (
@@ -221,7 +223,7 @@ export function Cta() {
                   </div>
                   <Field name="message" label="Murojaat matni" textarea required />
                   <label className="flex items-start gap-3 text-sm text-ivory/80">
-                    <input type="checkbox" required className="mt-1 size-4 accent-[#2ee8d6]" />
+                    <input type="checkbox" required className="mt-1 size-4 accent-turq" />
                     Shaxsiy ma’lumotlarimni qayta ishlashga roziman
                   </label>
                   <div className="mt-2 flex justify-end">
@@ -232,7 +234,9 @@ export function Cta() {
                         className="group relative inline-flex h-16 items-center gap-4 overflow-hidden rounded-full bg-ivory pl-8 pr-2 font-mono text-[13px] uppercase tracking-[0.2em] text-ink"
                       >
                         <span className="absolute inset-0 translate-y-full rounded-full bg-turq transition-transform duration-700 ease-expo group-hover:translate-y-0" />
-                        <span className="relative">Murojaat yuborish</span>
+                        <span className="relative">
+                          <Roll>Murojaat yuborish</Roll>
+                        </span>
                         <span className="relative grid size-12 place-items-center rounded-full bg-ink text-ivory transition-transform duration-500 ease-expo group-hover:rotate-45">
                           <ArrowUpRight className="size-5" />
                         </span>
