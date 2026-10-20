@@ -27,8 +27,8 @@ const nextConfig: NextConfig = {
     const week = "public, max-age=604800, stale-while-revalidate=2592000";
     return [
       ...["/images/:path*", "/textures/:path*"].map((source) => ({ source, headers: [{ key: "Cache-Control", value: week }] })),
-      // nginx passes streamed pages on chunk by chunk (the static shell first) instead of buffering them whole
-      { source: "/:path*{/}?", headers: [{ key: "X-Accel-Buffering", value: "no" }] },
+      // (pages are not streamed through nginx on purpose: it keeps each one for 10 s and hands that copy to
+      // everyone — nginx/user_conf.d/mentadbirkor.conf — which carries far more visitors than streaming)
     ];
   },
   // Old site URLs keep working (bookmarks, search engines).
