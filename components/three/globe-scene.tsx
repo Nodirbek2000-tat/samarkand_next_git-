@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { sceneState } from "@/lib/store";
-import { CITIES, SAMARKAND } from "@/lib/silk-road";
+import { CITIES, globeMaps, SAMARKAND } from "@/lib/silk-road";
 import { isLite } from "@/lib/perf";
 
 const R = 2;
@@ -51,12 +51,9 @@ function useEarthMaps(urls: string[]) {
  * Imagery: NASA Visible Earth / Earth Observatory.
  */
 function Earth({ mobile, sun }: { mobile: boolean; sun: THREE.Vector3 }) {
-  // 2K maps stay sharp at the globe's on-screen size and are a third of the download of the full ones
-  const [day, night, clouds] = useEarthMaps([
-    "/textures/earth/day-2k.webp",
-    "/textures/earth/night-2k.webp",
-    `/textures/earth/clouds${mobile ? "-1k" : ""}.webp`,
-  ]);
+  // 2K maps stay sharp at the globe's on-screen size on a computer; a phone's ~400 px globe needs only 1K
+  // (scripts/make-globe-phone-maps.mjs) — a quarter of the download
+  const [day, night, clouds] = useEarthMaps(globeMaps(mobile));
   const mat = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
@@ -122,7 +119,7 @@ function Earth({ mobile, sun }: { mobile: boolean; sun: THREE.Vector3 }) {
   return (
     <mesh material={mat}>
       {/* 96×64 is smooth at this size (12k → 6k vertices) */}
-      <sphereGeometry args={[R, 96, 64]} />
+      <sphereGeometry args={mobile ? [R, 64, 48] : [R, 96, 64]} />
     </mesh>
   );
 }
@@ -267,6 +264,29 @@ function FirstFrame({ onReady }: { onReady?: () => void }) {
   return null;
 }
 
+/**
+ * Watches the globe's own frames for its first 2.5 s on screen: if the device can't hold about 28 frames
+ * a second (median frame), the page goes back to the picture instead of stuttering.
+ */
+function FrameGuard({ active, onSlow }: { active: boolean; onSlow?: () => void }) {
+  const gaps = useRef<number[]>([]);
+  const watched = useRef(0);
+  const done = useRef(false);
+  useFrame((_, dt) => {
+    if (done.current || !onSlow || !active) return;
+    // a gap after the canvas idled off screen says nothing about this device
+    if (dt > 0.5) return;
+    gaps.current.push(dt);
+    watched.current += dt;
+    if (watched.current < 2.5 || gaps.current.length < 12) return;
+    done.current = true;
+    // the first frames carry shader compilation and texture upload
+    const sorted = gaps.current.slice(5).sort((a, b) => a - b);
+    if (sorted[Math.floor(sorted.length / 2)] > 1 / 28) onSlow();
+  });
+  return null;
+}
+
 function Globe({
   progress,
   mobile,
@@ -324,23 +344,29 @@ export default function GlobeScene({
   progress,
   theme = "light",
   onReady,
+  onSlow,
 }: {
   active: boolean;
   progress: React.RefObject<number>;
   theme?: "light" | "dark";
   onReady?: () => void;
+  onSlow?: () => void;
 }) {
   const [mobile] = useState(() => window.matchMedia("(max-width: 767px)").matches);
   const [lite] = useState(isLite);
   return (
     <Canvas
-      dpr={lite ? 1 : [1, mobile ? 1.25 : 1.5]}
+      // computers in light mode never get here; phones keep a dense enough picture for their small globe
+      dpr={[1, mobile && lite ? 1.25 : 1.5]}
+      // nothing to touch on the globe: a finger on it scrolls the page
+      style={{ pointerEvents: "none" }}
       frameloop={active ? "always" : "demand"}
       camera={{ position: [0, 0, mobile ? 8.6 : 7.8], fov: 40 }}
       // high-density screens smooth the edges by themselves: multisampling there only costs frames
       gl={{ antialias: window.devicePixelRatio < 1.5, alpha: true, powerPreference: "high-performance" }}
     >
       <Globe progress={progress} mobile={mobile} night={theme === "dark"} onReady={onReady} />
+      <FrameGuard active={active} onSlow={onSlow} />
     </Canvas>
   );
 }

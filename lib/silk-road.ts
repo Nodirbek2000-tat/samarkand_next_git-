@@ -22,3 +22,13 @@ export function distanceKm(a: { lat: number; lon: number }, b: { lat: number; lo
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2;
   return Math.round(2 * 6371 * Math.asin(Math.sqrt(h)));
 }
+
+/**
+ * The live globe's maps (NASA day / night lights / clouds): 2K on computers, 1K on phones — their ~400 px
+ * globe doesn't need more (scripts/make-globe-phone-maps.mjs). Shared by the scene and the page that
+ * fetches them ahead, without pulling three.js into the page bundle.
+ */
+export const globeMaps = (phone: boolean) =>
+  phone
+    ? ["/textures/earth/day-1k.webp", "/textures/earth/night-1k.webp", "/textures/earth/clouds-1k.webp"]
+    : ["/textures/earth/day-2k.webp", "/textures/earth/night-2k.webp", "/textures/earth/clouds.webp"];

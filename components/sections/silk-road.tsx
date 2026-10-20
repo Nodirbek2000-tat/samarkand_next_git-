@@ -2,18 +2,16 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
-import { isLite } from "@/lib/perf";
+import { globeAllowed, globeTooSlow } from "@/lib/perf";
 import { introStore } from "@/lib/store";
-import { CITIES, SAMARKAND, distanceKm } from "@/lib/silk-road";
+import { CITIES, SAMARKAND, distanceKm, globeMaps } from "@/lib/silk-road";
 import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const loadGlobe = () => import("@/components/three/globe-scene");
 const GlobeScene = dynamic(loadGlobe, { ssr: false, loading: () => null });
-/** what the 3D globe downloads (desktop maps — phones keep the picture) — fetched ahead */
-const GLOBE_FILES = ["/textures/earth/day-2k.webp", "/textures/earth/night-2k.webp", "/textures/earth/clouds.webp"];
 /** a moment counts as calm when nobody has scrolled for this long (a reading pause, not a brief stop mid-scroll) */
 const CALM_MS = 1200;
 
@@ -26,27 +24,34 @@ export function SilkRoad() {
   const root = useRef<HTMLElement>(null);
   const progress = useRef(0);
   const [active, setActive] = useState(false);
-  // The picture of the globe is there at once. The live WebGL globe (three.js + NASA textures) only on
-  // capable computers: prepared in calm moments after the intro (download + start-up, then the GPU upload
-  // on mount), so none of that lands in the middle of someone's scroll; it fades in over the picture
-  // once its first frame is drawn and only draws continuously while on screen. Phones and older
-  // computers keep the picture: no 3D at all.
+  // The picture of the globe is there at once. The live WebGL globe (three.js + NASA textures) wherever
+  // globeAllowed() says the device can carry it — computers outside light mode, and phones (smaller maps)
+  // unless they save data or sit on a slow link: prepared in calm moments after the intro (download +
+  // start-up, then the GPU upload on mount), so none of that lands in the middle of someone's scroll; it
+  // fades in over the picture once its first frame is drawn and only draws continuously while on screen.
+  // If it then can't keep a smooth frame rate, it steps back to the picture for the rest of the visit.
   const [seen, setSeen] = useState(false);
   const [ready, setReady] = useState(false);
   const theme = useTheme();
+  const tooSlow = useCallback(() => {
+    globeTooSlow();
+    setReady(false);
+    setSeen(false);
+  }, []);
 
   useEffect(() => {
     const el = root.current;
-    if (!el || isLite() || window.matchMedia("(max-width: 767px)").matches) return;
+    if (!el || !globeAllowed()) return;
 
     let warmed = false;
     const warm = () => {
       if (warmed) return;
       warmed = true;
       loadGlobe();
-      GLOBE_FILES.forEach((url) => fetch(url).catch(() => {}));
+      globeMaps(window.matchMedia("(max-width: 767px)").matches).forEach((url) => fetch(url).catch(() => {}));
     };
     const mount = () => {
+      if (!globeAllowed()) return;
       warm();
       setSeen(true);
     };
@@ -59,7 +64,7 @@ export function SilkRoad() {
     let timer = 0;
     const tick = () => {
       // light mode may have been switched on by the preloader's frame probe: keep the picture then
-      if (isLite() || step > 1) return;
+      if (!globeAllowed() || step > 1) return;
       if (performance.now() - lastScroll < CALM_MS) {
         timer = window.setTimeout(tick, CALM_MS);
         return;
@@ -84,8 +89,8 @@ export function SilkRoad() {
     startCalm();
 
     // fallbacks for a visitor who never pauses: fetch three screens ahead, mount one screen ahead
-    const near = new IntersectionObserver(([e]) => e.isIntersecting && !isLite() && warm(), { rootMargin: "300% 0px" });
-    const close = new IntersectionObserver(([e]) => e.isIntersecting && !isLite() && mount(), { rootMargin: "100% 0px" });
+    const near = new IntersectionObserver(([e]) => e.isIntersecting && globeAllowed() && warm(), { rootMargin: "300% 0px" });
+    const close = new IntersectionObserver(([e]) => e.isIntersecting && mount(), { rootMargin: "100% 0px" });
     // draw continuously only while it is actually on screen
     const visible = new IntersectionObserver(([e]) => setActive(e.isIntersecting));
     near.observe(el);
@@ -187,7 +192,7 @@ export function SilkRoad() {
           </div>
           {seen ? (
             <div className={cn("absolute inset-0 opacity-0 transition-opacity duration-700", ready && "opacity-100")}>
-              <GlobeScene active={active} progress={progress} theme={theme} onReady={() => setReady(true)} />
+              <GlobeScene active={active} progress={progress} theme={theme} onReady={() => setReady(true)} onSlow={tooSlow} />
             </div>
           ) : null}
           <div className="glass pointer-events-none absolute bottom-[12%] left-[6%] rounded-2xl px-4 py-3 font-mono text-[12px] uppercase tracking-[0.15em] text-ivory">
