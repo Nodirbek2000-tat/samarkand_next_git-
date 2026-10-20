@@ -110,7 +110,10 @@ export function Cta() {
 
   return (
     <section ref={root} id="aloqa" className="relative overflow-hidden bg-ink px-5 py-32 md:px-10 md:py-44">
-      <div data-orb className="orb pointer-events-none absolute left-1/2 top-1/3 size-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full" />
+      {/* the wrapper grows with the scroll (GSAP), the orb inside spins (CSS) — one transform each, on the GPU */}
+      <div data-orb className="pointer-events-none absolute left-1/2 top-1/3 size-[80vmin] -translate-x-1/2 -translate-y-1/2 will-change-transform">
+        <div className="orb size-full rounded-full" />
+      </div>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,transparent_0%,var(--color-ink)_65%)]" />
 
       <div className="relative mx-auto max-w-[1600px]">

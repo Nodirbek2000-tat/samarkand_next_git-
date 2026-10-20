@@ -1,13 +1,15 @@
 "use client";
 
-import { Suspense, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { sceneState } from "@/lib/store";
 import { CITIES, SAMARKAND } from "@/lib/silk-road";
 import { isLite } from "@/lib/perf";
 
 const R = 2;
+/** the Earth keeps turning on its own: one revolution in about 45 s */
+const SPIN = (Math.PI * 2) / 45;
 const globeUniforms = { uTime: { value: 0 }, uDpr: { value: 1 } };
 
 function toVec(lat: number, lon: number, r = R) {
@@ -35,7 +37,7 @@ function useEarthMaps(urls: string[]) {
           t.needsUpdate = true;
         }
         if (i < 2) t.colorSpace = THREE.SRGBColorSpace; // day + night are colour, clouds are a mask
-        t.anisotropy = 8;
+        t.anisotropy = 4;
         t.wrapS = THREE.RepeatWrapping;
         return t;
       }),
@@ -119,7 +121,8 @@ function Earth({ mobile, sun }: { mobile: boolean; sun: THREE.Vector3 }) {
   }, [day, night, clouds, sun]);
   return (
     <mesh material={mat}>
-      <sphereGeometry args={[R, 128, 96]} />
+      {/* 96×64 is smooth at this size (12k → 6k vertices) */}
+      <sphereGeometry args={[R, 96, 64]} />
     </mesh>
   );
 }
@@ -247,8 +250,14 @@ function SamarkandBeacon() {
   );
 }
 
-/** Tells the page once the Earth has been drawn with its maps (the picture underneath can fade out). */
+/**
+ * Tells the page once the Earth has been drawn with its maps (the picture underneath can fade out).
+ * Off screen the canvas only draws on demand: ask for one frame now that the maps are in, so the shaders
+ * and textures reach the GPU at mount (a calm moment) rather than when the globe scrolls into view.
+ */
 function FirstFrame({ onReady }: { onReady?: () => void }) {
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => invalidate(), [invalidate]);
   const done = useRef(false);
   useFrame(() => {
     if (done.current) return;
@@ -280,14 +289,18 @@ function Globe({
     return -Math.atan2(p.x, p.z);
   }, []);
 
+  const spin = useRef(0);
   useFrame((s, dt) => {
     globeUniforms.uTime.value = s.clock.elapsedTime;
     globeUniforms.uDpr.value = s.gl.getPixelRatio();
     const g = group.current;
     if (!g) return;
     const p = progress.current ?? 0;
-    // spin in from the far side and settle with Samarkand facing the viewer
-    const targetY = face + (1 - p) * Math.PI * 1.4 + sceneState.mouseX * 0.25 + Math.sin(s.clock.elapsedTime * 0.2) * 0.05;
+    // a steady turn (dt capped: no jump after the tab was hidden or the canvas idled off screen)
+    spin.current += Math.min(dt, 0.1) * SPIN;
+    // spin in from the far side as the section scrolls up — Samarkand faces the viewer when it arrives —
+    // and keep turning from there
+    const targetY = face + (1 - p) * Math.PI * 1.4 + spin.current + sceneState.mouseX * 0.25;
     const targetX = 0.5 + sceneState.mouseY * 0.12;
     g.rotation.y = THREE.MathUtils.damp(g.rotation.y, targetY, 3, dt);
     g.rotation.x = THREE.MathUtils.damp(g.rotation.x, targetX, 3, dt);
@@ -322,9 +335,10 @@ export default function GlobeScene({
   return (
     <Canvas
       dpr={lite ? 1 : [1, mobile ? 1.25 : 1.5]}
-      frameloop={active ? "always" : "never"}
+      frameloop={active ? "always" : "demand"}
       camera={{ position: [0, 0, mobile ? 8.6 : 7.8], fov: 40 }}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      // high-density screens smooth the edges by themselves: multisampling there only costs frames
+      gl={{ antialias: window.devicePixelRatio < 1.5, alpha: true, powerPreference: "high-performance" }}
     >
       <Globe progress={progress} mobile={mobile} night={theme === "dark"} onReady={onReady} />
     </Canvas>

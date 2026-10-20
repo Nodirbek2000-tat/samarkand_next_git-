@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowUpRight, BookOpen, ChevronDown, LayoutDashboard, LogIn, Phone, Search, X } from "lucide-react";
+import { ArrowUpRight, BookOpen, ChevronDown, LayoutDashboard, LogIn, Phone, Search } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Magnetic } from "@/components/magnetic";
 import { AdminQuick } from "@/components/admin-quick";
@@ -15,6 +14,7 @@ import { useIntroDone } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { SITE_NAV } from "./nav";
 import { PathWatcher } from "./path-watcher";
+import { SearchDialog } from "./search-dialog";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 // «Made in Samarkand» electronic catalogue — the admin can change it in the site settings
@@ -58,11 +58,16 @@ export function SiteHeader({ phone, catalog, waitForIntro = false }: { phone?: s
 
   useEffect(() => {
     if (!lenis) return;
+    // the bar slides away while the page moves down and comes back as soon as it stops or goes up;
+    // React state is only touched when one of the two values really flips
     let last = 0;
+    let scrolledNow = false;
+    let hiddenNow = false;
     const onScroll = ({ scroll }: { scroll: number }) => {
-      setScrolled(scroll > 30);
-      setHidden(scroll > last && scroll > 400);
+      if (scroll > 30 !== scrolledNow) setScrolled((scrolledNow = !scrolledNow));
+      const hide = scroll > last && scroll > 400;
       last = scroll;
+      if (hide !== hiddenNow) setHidden((hiddenNow = hide));
     };
     lenis.on("scroll", onScroll);
     return () => lenis.off("scroll", onScroll);
@@ -493,53 +498,6 @@ function MobileMenu({
           </a>
         )}
       </div>
-    </motion.div>
-  );
-}
-
-function SearchDialog({ onClose }: { onClose: () => void }) {
-  const router = useRouter();
-  const [q, setQ] = useState("");
-  const input = useRef<HTMLInputElement>(null);
-  useEffect(() => input.current?.focus(), []);
-
-  return (
-    <motion.div
-      className="fixed inset-0 z-[70] flex items-start justify-center bg-ink/70 px-4 pt-[14vh] backdrop-blur-md"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-    >
-      <motion.form
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (q.trim().length >= 2) router.push(`/search?q=${encodeURIComponent(q.trim())}`);
-        }}
-        initial={{ y: -30, opacity: 0, scale: 0.97 }}
-        animate={{ y: 0, opacity: 1, scale: 1 }}
-        exit={{ y: -20, opacity: 0 }}
-        transition={{ duration: 0.5, ease }}
-        className="glass w-full max-w-2xl rounded-3xl p-3"
-        role="search"
-      >
-        <div className="flex items-center gap-3 px-3">
-          <Search className="size-6 shrink-0 text-turq" />
-          <input
-            ref={input}
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Yangiliklar, loyihalar, a’zolar…"
-            className="h-14 w-full bg-transparent text-xl text-ivory outline-none placeholder:text-ivory/45"
-            aria-label="Sayt bo‘yicha qidirish"
-          />
-          <button type="button" onClick={onClose} aria-label="Yopish" className="grid size-10 shrink-0 place-items-center rounded-full hover:bg-ivory/10">
-            <X className="size-5" />
-          </button>
-        </div>
-        <p className="px-4 pb-2 pt-1 text-sm text-ivory/60">Enter — qidirish · Esc — yopish</p>
-      </motion.form>
     </motion.div>
   );
 }

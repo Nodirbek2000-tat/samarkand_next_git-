@@ -28,14 +28,18 @@ function Door({ mirror = false }: { mirror?: boolean }) {
           }}
         >
           <span className="gate-gild" />
-          <span data-gate-charge className="gate-gild gate-charge" />
+          <span data-gate-charge className="gate-charge">
+            <span />
+          </span>
           <span data-gate-dim className={side === "left" ? "gate-dim" : "gate-dim gate-dim-r"} />
         </div>
       ))}
 
       <div className="gate-part" style={{ clipPath: GATE_FRAME }}>
         <span className="gate-gild" />
-        <span data-gate-charge className="gate-gild gate-charge" />
+        <span data-gate-charge className="gate-charge">
+          <span />
+        </span>
       </div>
 
       {/* light forcing its way through the seam */}

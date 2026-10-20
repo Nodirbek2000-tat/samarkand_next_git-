@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { Building2, Factory, Users, ClipboardCheck } from "lucide-react";
 import { gsap, useGSAP } from "@/lib/gsap";
-import { isLite } from "@/lib/perf";
+import { heavyEffects } from "@/lib/heavy-effects";
 
 const STEPS = [
   {
@@ -33,8 +33,19 @@ export function Meetings() {
 
   useGSAP(
     () => {
+      gsap.utils.toArray<HTMLElement>("[data-step]").forEach((step) => {
+        const tl = gsap.timeline({
+          scrollTrigger: { trigger: step, start: "top 68%", toggleActions: "play none none reverse" },
+        });
+        // the node pops (scale) and its pre-painted glow fades in (opacity) — nothing is repainted per frame
+        tl.to(step.querySelector("[data-node]"), { scale: 1, duration: 0.6, ease: "back.out(3)" })
+          .to(step.querySelector("[data-node-glow]"), { opacity: 1, duration: 0.4, ease: "power2.out" }, 0)
+          .from(step.querySelector("[data-step-card]"), { x: 60, opacity: 0, duration: 1, ease: "expo.out" }, 0)
+          .from(step.querySelector("[data-step-num]"), { yPercent: 100, opacity: 0, duration: 1, ease: "expo.out" }, 0.05);
+      });
+
       // the line grows with the scroll — on weak machines it is simply there (no repaint every frame)
-      if (!isLite()) {
+      return heavyEffects(() => {
         const path = root.current!.querySelector<SVGPathElement>("[data-path]")!;
         const len = path.getTotalLength();
         gsap.set(path, { strokeDasharray: len, strokeDashoffset: len });
@@ -43,21 +54,7 @@ export function Meetings() {
           ease: "none",
           scrollTrigger: { trigger: "[data-steps]", start: "top 70%", end: "bottom 60%", scrub: true },
         });
-      }
-
-      gsap.utils.toArray<HTMLElement>("[data-step]").forEach((step) => {
-        const tl = gsap.timeline({
-          scrollTrigger: { trigger: step, start: "top 68%", toggleActions: "play none none reverse" },
-        });
-        tl.to(step.querySelector("[data-node]"), {
-          scale: 1,
-          "--lit": 1, // fill + glow in the theme's accent (globals.css .meet-node)
-          duration: 0.6,
-          ease: "back.out(3)",
-        })
-          .from(step.querySelector("[data-step-card]"), { x: 60, opacity: 0, duration: 1, ease: "expo.out" }, 0)
-          .from(step.querySelector("[data-step-num]"), { yPercent: 100, opacity: 0, duration: 1, ease: "expo.out" }, 0.05);
-      });
+      }, root.current);
     },
     { scope: root },
   );
@@ -101,7 +98,9 @@ export function Meetings() {
             {STEPS.map(({ icon: Icon, title, text }, i) => (
               <li key={title} data-step className="relative grid grid-cols-[48px_1fr] gap-5 md:grid-cols-[64px_1fr] md:gap-8">
                 <div className="flex justify-center pt-8">
-                  <span data-node className="meet-node block size-4 scale-75 rounded-full border-2 border-turq" />
+                  <span data-node className="meet-node relative block size-4 scale-75 rounded-full border-2 border-turq">
+                    <span data-node-glow className="meet-glow" />
+                  </span>
                 </div>
                 <div
                   data-step-card

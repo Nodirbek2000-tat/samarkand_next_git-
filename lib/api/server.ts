@@ -29,18 +29,31 @@ const DJANGO_URL = process.env.DJANGO_URL ?? "http://127.0.0.1:8000";
  * Cached read from Django. Every response is tagged, and Django calls /internal/revalidate
  * with the same tags on save — so pages stay fast yet show edits immediately.
  * Returns null when the backend is unreachable or the object doesn't exist.
+ *
+ * Content is served from the cache and refreshed in the background every hour; a visitor only waits for
+ * Django if nobody opened that page for a week (it used to be one hour). «Not found» is cached the same way
+ * (creating the object revalidates its tag); a failed answer is kept for a minute only, so a hiccup heals by
+ * itself. Django gets 8 s at most.
  */
+const CONTENT = { stale: 300, revalidate: 3600, expire: 604800 };
+
 async function get<T>(path: string, tags: string[]): Promise<T | null> {
   "use cache";
-  cacheLife("minutes");
   for (const tag of tags) cacheTag(tag);
   try {
-    const res = await fetch(`${DJANGO_URL}/api/${path}`, { headers: { Accept: "application/json" } });
-    if (!res.ok) return null;
-    return (await res.json()) as T;
-  } catch {
-    return null;
-  }
+    const res = await fetch(`${DJANGO_URL}/api/${path}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(8000) });
+    if (res.ok) {
+      const data = (await res.json()) as T;
+      cacheLife(CONTENT);
+      return data;
+    }
+    if (res.status === 404) {
+      cacheLife(CONTENT);
+      return null;
+    }
+  } catch {}
+  cacheLife("minutes");
+  return null;
 }
 
 const enc = encodeURIComponent;
@@ -87,5 +100,7 @@ export const api = {
   partners: () => get<Partner[]>("partners", ["partners"]),
   telegram: () =>
     get<{ enabled: boolean; bot_username: string; bot_url: string; code_ttl: number }>("auth/telegram", ["settings"]),
-  search: (q: string) => get<{ query: string; results: SearchResult[] }>(`search${qs({ q })}`, ["search", "news", "projects"]),
+  search: (q: string) => get<{ query: string; results: SearchResult[] }>(`search${qs({ q })}`, [
+      "search", "pages", "news", "projects", "announcements", "council", "forum", "films", "galleries", "partners",
+    ]),
 };

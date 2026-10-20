@@ -11,6 +11,8 @@ const STATS = [
 ];
 
 const C = 2 * Math.PI * 46;
+/** one formatter for every counter frame ("6 000"); the text is only written when the number changes */
+const FMT = new Intl.NumberFormat("ru-RU");
 
 export function Stats() {
   const root = useRef<HTMLElement>(null);
@@ -23,12 +25,18 @@ export function Stats() {
         const target = Number(num.dataset.num);
         const ratio = Number(arc.dataset.arc);
         const counter = { v: 0 };
+        let shown = -1;
         const tl = gsap.timeline({ scrollTrigger: { trigger: el, start: "top 85%" } });
         tl.to(counter, {
           v: target,
           duration: 2.2,
           ease: "expo.out",
-          onUpdate: () => (num.textContent = Math.round(counter.v).toLocaleString("ru-RU")),
+          onUpdate: () => {
+            const v = Math.round(counter.v);
+            if (v === shown) return;
+            shown = v;
+            num.textContent = FMT.format(v);
+          },
         })
           .fromTo(arc, { strokeDashoffset: C }, { strokeDashoffset: C * (1 - ratio), duration: 2.2, ease: "expo.out" }, 0)
           .from(el.querySelectorAll("[data-stat-fade]"), { y: 20, opacity: 0, duration: 1, stagger: 0.1, ease: "expo.out" }, 0.1);

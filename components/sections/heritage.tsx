@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { isLite } from "@/lib/perf";
+import { gpuWhileMoving } from "@/lib/gpu-while-moving";
 
 import { SCENES, VIEW, type FillKind } from "./heritage-art";
 
@@ -32,8 +33,7 @@ export function Heritage() {
 
   useGSAP(
     (_, contextSafe) => {
-      // weak machines and reduced motion: the drawings are simply there, finished
-      const still = isLite() || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const cards = gsap.utils.toArray<HTMLElement>("[data-place]");
 
       // A card's drawing is prepared about a screen before it scrolls in — measuring every line of all five
@@ -47,8 +47,9 @@ export function Heritage() {
           // phones: fill the narrow card and let the far sides go, rather than a tiny strip
           svg.setAttribute("preserveAspectRatio", window.innerWidth < 768 ? "xMidYMax slice" : "xMidYMax meet");
         });
-        // the drawing: outlines first, then the fine details, then the colours settle in
-        if (!still) {
+        // the drawing: outlines first, then the fine details, then the colours settle in — weak machines
+        // (light mode, also when switched on after mount) and reduced motion get it finished
+        if (!reduce && !isLite()) {
           const strokes = card.querySelectorAll<SVGPathElement>("[data-line], [data-detail]");
           strokes.forEach((p) => {
             const len = p.getTotalLength();
@@ -73,23 +74,31 @@ export function Heritage() {
         { rootMargin: "100% 0px" },
       );
 
+      const stops: (() => void)[] = [];
       cards.forEach((card, i) => {
         io.observe(card);
         // the next card slides over: this one sinks and dims under an opaque shade (never see-through,
         // so the cards further back never show through it)
+        // (one trigger for both; while it moves the card and its shade are GPU layers — no full-card repaint)
         if (i < cards.length - 1) {
-          const st = { trigger: cards[i + 1], start: "top bottom", end: "top 15%", scrub: true };
-          gsap.to(card.querySelector("[data-place-inner]"), {
-            scale: 0.92,
-            // phones: the covered card also tips aside, like a deck being dealt
-            rotate: () => (window.innerWidth < 768 ? (i % 2 ? 4 : -4) : 0),
-            ease: "none",
-            scrollTrigger: st,
-          });
-          gsap.to(card.querySelector("[data-place-shade]"), { opacity: 0.55, ease: "none", scrollTrigger: { ...st } });
+          const inner = card.querySelector("[data-place-inner]");
+          const shade = card.querySelector("[data-place-shade]");
+          const sink = gsap
+            .timeline({ scrollTrigger: { trigger: cards[i + 1], start: "top bottom", end: "top 15%", scrub: true } })
+            .to(inner, {
+              scale: 0.92,
+              // phones: the covered card also tips aside, like a deck being dealt
+              rotate: () => (window.innerWidth < 768 ? (i % 2 ? 4 : -4) : 0),
+              ease: "none",
+            })
+            .to(shade, { opacity: 0.55, ease: "none" }, 0);
+          stops.push(gpuWhileMoving(sink, [inner, shade]));
         }
       });
-      return () => io.disconnect();
+      return () => {
+        io.disconnect();
+        stops.forEach((stop) => stop());
+      };
     },
     { scope: root },
   );

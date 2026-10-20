@@ -26,6 +26,8 @@ COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=build --chown=nextjs:nodejs /app/public ./public
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
+# the optimized-image cache lives on a volume (docker-compose.yml): it starts out owned by the app user
+RUN mkdir -p .next/cache && chown nextjs:nodejs .next/cache
 USER nextjs
 EXPOSE 3000
 CMD ["sh", "./docker-entrypoint.sh"]

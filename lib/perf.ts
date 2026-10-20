@@ -6,12 +6,15 @@
  * Plain module (no "use client"): the server layout inlines LITE_SCRIPT, components import the helpers.
  */
 const ATTR = "data-lite";
+/** sessionStorage: the frame probe found this machine slow — later pages start light at once */
+const LITE_KEY = "ys-lite";
 
 /**
  * Runs in <head> before first paint: what the browser already knows — data saver, 2G/3G,
- * ≤4 GB memory, ≤4 CPU threads. Slow machines that pass this are caught by the frame probe (Preloader).
+ * ≤4 GB memory, ≤4 CPU threads, or an earlier probe verdict in this tab. Slow machines that pass this
+ * are caught by the frame probe (Preloader).
  */
-export const LITE_SCRIPT = `(function(){try{var n=navigator,c=n.connection||{},m=n.deviceMemory,h=n.hardwareConcurrency;if(c.saveData||/2g|3g/.test(c.effectiveType||"")||(m&&m<=4)||(h&&h<=4))document.documentElement.setAttribute("${ATTR}","")}catch(e){}})()`;
+export const LITE_SCRIPT = `(function(){try{var n=navigator,c=n.connection||{},m=n.deviceMemory,h=n.hardwareConcurrency;if(sessionStorage.getItem("${LITE_KEY}")||c.saveData||/2g|3g/.test(c.effectiveType||"")||(m&&m<=4)||(h&&h<=4))document.documentElement.setAttribute("${ATTR}","")}catch(e){}})()`;
 
 const listeners = new Set<() => void>();
 
@@ -23,6 +26,9 @@ export function isLite() {
 export function enableLite() {
   if (isLite()) return;
   document.documentElement.setAttribute(ATTR, "");
+  try {
+    sessionStorage.setItem(LITE_KEY, "1");
+  } catch {}
   listeners.forEach((cb) => cb());
 }
 
@@ -37,6 +43,7 @@ export function onLite(cb: () => void) {
  * that gives the verdict.
  */
 export function probeFrames(budget = 24) {
+  // a machine drawing only ~15 frames a second gives few samples: 10 are enough for a median
   const gaps: number[] = [];
   let last = 0;
   let id = requestAnimationFrame(function tick(t) {
@@ -46,7 +53,7 @@ export function probeFrames(budget = 24) {
   });
   return () => {
     cancelAnimationFrame(id);
-    if (gaps.length < 20) return false;
+    if (gaps.length < 10) return false;
     const sorted = gaps.sort((a, b) => a - b);
     return sorted[Math.floor(sorted.length / 2)] > budget;
   };

@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { Check, Crown } from "lucide-react";
 import { gsap, useGSAP } from "@/lib/gsap";
+import { followPointer, leavePointer } from "@/lib/pointer";
 import { useLenis } from "@/components/providers/smooth-scroll";
 import { useCoverflow, SwipeHint } from "@/components/coverflow";
 import { Roll } from "@/components/roll";
@@ -67,22 +68,20 @@ export function Membership() {
     { scope: root },
   );
 
-  // mouse-only foil tilt (touch would fight the phone carousel swipe)
-  const move = (e: React.PointerEvent<HTMLElement>) => {
-    if (e.pointerType !== "mouse" || window.innerWidth < 768) return;
-    const el = e.currentTarget;
-    const r = el.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width;
-    const py = (e.clientY - r.top) / r.height;
-    el.style.setProperty("--px", `${px * 100}%`);
-    el.style.setProperty("--py", `${py * 100}%`);
-    el.style.setProperty("--angle", `${px * 180 + py * 90}deg`);
-    gsap.to(el, { rotateY: (px - 0.5) * 16, rotateX: -(py - 0.5) * 16, duration: 0.5, ease: "power3" });
-  };
-  const leave = (e: React.PointerEvent<HTMLElement>) => {
-    if (e.pointerType !== "mouse" || window.innerWidth < 768) return;
-    gsap.to(e.currentTarget, { rotateX: 0, rotateY: 0, duration: 1.2, ease: "elastic.out(1, 0.4)" });
-  };
+  // mouse-only foil + tilt (touch would fight the phone carousel swipe); the foil's vars live on the foil
+  const move = (e: React.PointerEvent<HTMLElement>) =>
+    window.innerWidth >= 768 &&
+    followPointer(
+      e,
+      (card, px, py) => {
+        const foil = card.querySelector<HTMLElement>("[data-foil]");
+        foil?.style.setProperty("--px", `${px * 100}%`);
+        foil?.style.setProperty("--py", `${py * 100}%`);
+        foil?.style.setProperty("--angle", `${px * 180 + py * 90}deg`);
+      },
+      16,
+    );
+  const leave = (e: React.PointerEvent<HTMLElement>) => window.innerWidth >= 768 && leavePointer(e);
 
   return (
     <section ref={root} id="azolik" className="relative overflow-hidden bg-ink px-5 py-20 md:px-10 md:py-40">
@@ -120,7 +119,8 @@ export function Membership() {
             >
               {/* holographic foil */}
               <div
-                className="pointer-events-none absolute inset-0 -z-10 opacity-0 mix-blend-color-dodge transition-opacity duration-500 group-hover:opacity-60"
+                data-foil
+                className="tier-foil pointer-events-none absolute inset-0 -z-10 opacity-0 mix-blend-color-dodge transition-opacity duration-500 group-hover:opacity-60"
                 style={{
                   background:
                     "conic-gradient(from var(--angle, 0deg) at var(--px, 50%) var(--py, 50%), #2ee8d6, #3b5bff, #ff7847, #f3c46b, #2ee8d6)",
@@ -130,7 +130,7 @@ export function Membership() {
                 className="pointer-events-none absolute inset-0 -z-10"
                 style={{ background: `radial-gradient(circle at 50% 120%, color-mix(in oklab, ${t.accent} 35%, transparent), transparent 60%)` }}
               />
-              <div className="flex items-start justify-between [transform:translateZ(30px)]">
+              <div className="flex items-start justify-between">
                 <span
                   className="rounded-full border px-3 py-1 font-mono text-[11.5px] uppercase tracking-[0.15em]"
                   // text: accent pulled toward the text colour so the deep lapis stays readable on both themes
@@ -140,7 +140,7 @@ export function Membership() {
                 </span>
                 {t.featured && <Crown className="size-5 text-gold" />}
               </div>
-              <div className="[transform:translateZ(50px)]">
+              <div>
                 <div className="flex items-end gap-2 font-display">
                   <span className="text-8xl font-bold leading-none tracking-tighter">{t.fee}</span>
                   <span className="mb-2 text-lg font-medium text-ivory/80">mln so‘m</span>

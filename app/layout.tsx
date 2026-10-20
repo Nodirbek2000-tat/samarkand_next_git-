@@ -16,9 +16,11 @@ const manrope = Manrope({
   subsets: ["latin"],
 });
 
+// small uppercase labels only: not preloaded, so its 40 KB never queue ahead of the first screen's picture
 const jetbrains = JetBrains_Mono({
   variable: "--font-jetbrains",
   subsets: ["latin"],
+  preload: false,
 });
 
 export const metadata: Metadata = {

@@ -17,9 +17,11 @@ for (const [year, count] of [["2023", 8], ["2024", 12], ["2025", 4]] as const) {
     await expect(page.getByRole("heading", { level: 1 })).toContainText(year);
     const cards = page.locator("main ul li article");
     await expect(cards).toHaveCount(count);
-    // one category at a time
-    await page.getByRole("button", { name: /^Lokalizatsiya/ }).click();
-    await expect(cards).toHaveCount(1);
+    // one category at a time (a click before the page has hydrated is retried)
+    await expect(async () => {
+      await page.getByRole("button", { name: /^Lokalizatsiya/ }).click();
+      await expect(cards).toHaveCount(1, { timeout: 1000 });
+    }).toPass();
     await page.getByRole("button", { name: /^Hammasi/ }).click();
     await expect(cards).toHaveCount(count);
   });

@@ -11,3 +11,5 @@ nginx
 docker-compose.yml
 server.env.example
 DEPLOY.md
+# sources of scripts/optimize-journey-images.mjs — the site serves the optimized copies in opt/
+public/images/journey/*.jpg

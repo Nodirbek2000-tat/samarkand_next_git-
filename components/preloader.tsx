@@ -3,56 +3,63 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { AnimatePresence, motion, animate, useMotionValue, useMotionValueEvent } from "motion/react";
 import { introStore } from "@/lib/store";
-import { enableLite, probeFrames } from "@/lib/perf";
+import { enableLite, isLite, probeFrames } from "@/lib/perf";
 import { useLenis } from "@/components/providers/smooth-scroll";
 import { StarMark } from "@/components/logo";
 
 const WORD = "SAMARQAND".split("");
 const ease = [0.16, 1, 0.3, 1] as const;
 const PETALS = 12;
-/** however slow the network, the page opens after this (images then arrive progressively) */
-const MAX_WAIT = 3500;
 
-/** Wait for what the first screen needs: fonts, the hero photo and the gate's door/gilding images. */
-function heroAssetsReady(): Promise<unknown> {
-  const hero = document.getElementById("top");
+/**
+ * Wait for what the first screen needs: fonts, the hero photo and the carved door of this theme.
+ * However slow the network, the page opens after `maxWait` (images then arrive progressively).
+ */
+function heroAssetsReady(maxWait: number): Promise<unknown> {
   const jobs: Promise<unknown>[] = [document.fonts?.ready ?? Promise.resolve()];
-  if (hero) {
-    hero.querySelectorAll("img").forEach((img) => {
-      if (img.checkVisibility?.() !== false) jobs.push(img.decode().catch(() => {}));
-    });
-    const urls = new Set<string>();
-    // the gilding glow only breathes after the intro: it may arrive while the curtain lifts
-    hero.querySelectorAll<HTMLElement>("*:not(.gate-gild)").forEach((el) => {
-      for (const m of getComputedStyle(el).backgroundImage.matchAll(/url\("?([^")]+)"?\)/g)) urls.add(m[1]);
-    });
-    urls.forEach((src) => {
-      const img = new Image();
-      img.src = src;
-      jobs.push(img.decode().catch(() => {}));
-    });
+  const hero = document.getElementById("top");
+  // the photo of this theme (the other one is hidden and never loads)
+  hero?.querySelectorAll("img").forEach((img) => {
+    if (img.checkVisibility?.() !== false) jobs.push(img.decode().catch(() => {}));
+  });
+  // the door for this theme and screen size: one CSS variable on the stage (globals.css .hero-stage)
+  const stage = hero?.querySelector(".hero-stage");
+  const door = stage && getComputedStyle(stage).getPropertyValue("--gate-door").match(/url\(\s*["']?([^"')]+)/)?.[1];
+  if (door) {
+    const img = new Image();
+    img.src = door;
+    jobs.push(img.decode().catch(() => {}));
   }
-  return Promise.race([Promise.all(jobs), new Promise((r) => setTimeout(r, MAX_WAIT))]);
+  return Promise.race([Promise.all(jobs), new Promise((r) => setTimeout(r, maxWait))]);
 }
 
 export function Preloader() {
   const lenis = useLenis();
-  const [done, setDone] = useState(false);
+  // Every page load opens with the preloader (fast when the pictures are already cached). Only a way back
+  // to "/" inside the site skips it: the intro has played, the hero is ready — and the curtain would
+  // otherwise hide the replayed intro. (On a page load introStore is false, matching the server render.)
+  const [done, setDone] = useState(introStore.get);
+  const skipped = useRef(done);
   const count = useMotionValue(0);
   const root = useRef<HTMLDivElement>(null);
   const digits = useRef<(HTMLSpanElement | null)[]>([]);
+  const shown = useRef([-1, -1, -1]);
 
-  // one style write per frame: --p drives the petals and the progress line in CSS, the odometer rolls its strips
+  // one style write per frame: --p drives the petals and the progress line in CSS; a digit strip is only
+  // touched when its digit changes (its CSS transition then rolls it — rewriting it every frame would restart it)
   useMotionValueEvent(count, "change", (v) => {
     root.current?.style.setProperty("--p", (v / 100).toFixed(3));
     const n = Math.round(v);
     [Math.floor(n / 100), Math.floor(n / 10) % 10, n % 10].forEach((d, i) => {
       const strip = digits.current[i];
-      if (strip) strip.style.transform = `translateY(${-d}em)`;
+      if (!strip || shown.current[i] === d) return;
+      shown.current[i] = d;
+      strip.style.transform = `translateY(${-d}em)`;
     });
   });
 
   useEffect(() => {
+    if (skipped.current) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let alive = true;
     // while the counter runs, watch how this machine keeps up: a slow one gets the light version
@@ -60,15 +67,16 @@ export function Preloader() {
     const verdict = probeFrames();
     // honest progress: run to 86% while the first screen loads, finish only when it is really there
     const toward86 = new Promise((resolve) =>
-      animate(count, 86, { duration: reduce ? 0.2 : 1.1, ease: [0.65, 0, 0.35, 1], onComplete: () => resolve(null) }),
+      animate(count, 86, { duration: reduce ? 0.2 : 0.7, ease: [0.65, 0, 0.35, 1], onComplete: () => resolve(null) }),
     );
-    Promise.all([toward86, heroAssetsReady()]).then(() => {
+    // a slow connection or machine waits less for the pictures: they keep arriving after the curtain lifts
+    Promise.all([toward86, heroAssetsReady(isLite() ? 2000 : 3500)]).then(() => {
       if (!alive) return;
       if (verdict()) enableLite();
       animate(count, 100, {
-        duration: reduce ? 0.1 : 0.45,
+        duration: reduce ? 0.1 : 0.3,
         ease: [0.65, 0, 0.35, 1],
-        onComplete: () => setTimeout(() => alive && setDone(true), reduce ? 0 : 160),
+        onComplete: () => setTimeout(() => alive && setDone(true), reduce ? 0 : 80),
       });
     });
     return () => {
@@ -80,8 +88,8 @@ export function Preloader() {
   useEffect(() => {
     if (!done) return;
     lenis?.start();
-    // let the curtain start lifting before the hero choreography kicks in
-    const t = setTimeout(() => introStore.set(true), 450);
+    // let the curtain start lifting before the hero choreography kicks in (nothing to wait for when skipped)
+    const t = setTimeout(() => introStore.set(true), skipped.current ? 0 : 350);
     return () => clearTimeout(t);
   }, [done, lenis]);
 
@@ -93,9 +101,9 @@ export function Preloader() {
           ref={root}
           className="fixed inset-0 z-[90] flex flex-col justify-between overflow-hidden bg-ink p-6 md:p-10"
           style={{ "--p": 0 } as CSSProperties}
-          // the curtain lifts as one GPU layer (transform), not a per-frame clip-path repaint
-          exit={{ y: "-100%" }}
-          transition={{ duration: 1.1, ease }}
+          // the curtain lifts as one GPU layer: a plain `transform` runs on the compositor (WAAPI), not per frame in JS
+          exit={{ transform: "translateY(-100%)" }}
+          transition={{ duration: 0.9, ease }}
         >
           <div className="pointer-events-none absolute left-1/2 top-1/2 size-[90vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--color-turq)_12%,transparent),transparent_65%)]" />
 

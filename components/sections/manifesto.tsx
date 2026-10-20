@@ -3,7 +3,8 @@
 import { useRef } from "react";
 import { Network, LineChart, Landmark, ShieldCheck } from "lucide-react";
 import { gsap, SplitText, useGSAP } from "@/lib/gsap";
-import { isLite } from "@/lib/perf";
+import { heavyEffects } from "@/lib/heavy-effects";
+import { followPointer, spotlightAt } from "@/lib/pointer";
 
 // the council's official goals (client document; the same text sits on /about)
 const CARDS = [
@@ -34,10 +35,20 @@ export function Manifesto() {
 
   useGSAP(
     () => {
+      gsap.from("[data-card]", {
+        y: 80,
+        opacity: 0,
+        rotateX: -25,
+        transformOrigin: "50% 100%",
+        duration: 1.3,
+        ease: "expo.out",
+        stagger: 0.1,
+        scrollTrigger: { trigger: "[data-cards]", start: "top 85%" },
+      });
+
       // weak machines: the text is simply there (lighting dozens of words per frame and turning the ring
       // with the scroll repaint the screen on every frame)
-      const lite = isLite();
-      if (!lite)
+      return heavyEffects(() => {
         SplitText.create("[data-manifesto]", {
           type: "words",
           autoSplit: true,
@@ -53,33 +64,17 @@ export function Manifesto() {
               },
             ),
         });
-
-      gsap.from("[data-card]", {
-        y: 80,
-        opacity: 0,
-        rotateX: -25,
-        transformOrigin: "50% 100%",
-        duration: 1.3,
-        ease: "expo.out",
-        stagger: 0.1,
-        scrollTrigger: { trigger: "[data-cards]", start: "top 85%" },
-      });
-
-      if (!lite)
         gsap.to("[data-ring]", {
           rotate: 180,
           ease: "none",
           scrollTrigger: { trigger: root.current, start: "top bottom", end: "bottom top", scrub: true },
         });
+      }, root.current);
     },
     { scope: root },
   );
 
-  const onMove = (e: React.PointerEvent<HTMLElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
-    e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
-  };
+  const onMove = (e: React.PointerEvent<HTMLElement>) => followPointer(e, spotlightAt);
 
   return (
     <section ref={root} id="kengash" className="relative overflow-hidden bg-ink px-5 py-20 md:px-10 md:py-44">

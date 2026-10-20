@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore, type CSSProperties } from "react";
+import { useEffect, useRef, useSyncExternalStore, type CSSProperties } from "react";
 import { useIntroDone } from "@/lib/store";
 import { isLite, onLite } from "@/lib/perf";
 import { JOURNEY, JOURNEY_RAIL, PIECES, journeyImage, type JourneyStop } from "./hero-journey-data";
@@ -23,26 +23,18 @@ const hash = (i: number, k: number) => {
   return x - Math.floor(x);
 };
 
-/** Sahifaning o'zi (Registon rasmi bilan) to'liq yuklandimi — shundan keyin sayohat rasmlari yuklanadi. */
-const subscribeLoad = (cb: () => void) => {
-  window.addEventListener("load", cb);
-  return () => window.removeEventListener("load", cb);
-};
 /** Sekin internet yoki zaif qurilmada katta (1920 px) rasm versiyalari yuklanmaydi. */
 const useLite = () => useSyncExternalStore(onLite, isLite, () => true);
-const usePageLoaded = () =>
-  useSyncExternalStore(
-    subscribeLoad,
-    () => document.readyState === "complete",
-    () => false,
-  );
 
 /** Rasmni bo'laklarga ajratadi: har bir bo'lak rasmning o'z qismini ko'rsatadi (object-fit: cover hisobi). */
-function Pieces({ cols, rows, ...attrs }: { cols: number; rows: number } & Record<`data-${string}`, string>) {
+function Pieces({ cols, rows, shade = false, ...attrs }: { cols: number; rows: number; shade?: boolean } & Record<`data-${string}`, string>) {
   return (
     <div className="j-pieces" style={{ "--cols": cols, "--rows": rows } as CSSProperties} {...attrs}>
       {Array.from({ length: cols * rows }, (_, i) => (
-        <span key={i} data-j-piece style={{ "--c": i % cols, "--r": Math.floor(i / cols) } as CSSProperties} />
+        <span key={i} data-j-piece style={{ "--c": i % cols, "--r": Math.floor(i / cols) } as CSSProperties}>
+          {/* door leaves darken as they turn away from the light */}
+          {shade ? <i className="j-piece-shade" /> : null}
+        </span>
       ))}
     </div>
   );
@@ -68,7 +60,7 @@ function Scene({ stop, i }: { stop: JourneyStop; i: number }) {
     >
       <div data-j-cam className="j-cam">
         <Pieces cols={1} rows={1} data-j-base="" />
-        {cols * rows > 1 ? <Pieces cols={cols} rows={rows} data-j-split="" /> : null}
+        {cols * rows > 1 ? <Pieces cols={cols} rows={rows} shade={stop.exit === "doors"} data-j-split="" /> : null}
       </div>
       {stop.exit === "warp" ? (
         <div className="j-streaks">
@@ -106,14 +98,25 @@ function Scene({ stop, i }: { stop: JourneyStop; i: number }) {
 }
 
 export function HeroJourney() {
-  // rasmlar birinchi ekran (Registon) yuklangandan keyin fonda yuklanadi — u bilan raqobat qilmaydi
-  const loaded = usePageLoaded();
+  const ref = useRef<HTMLDivElement>(null);
   const intro = useIntroDone();
   const lite = useLite();
+  // Rasmlar birinchi ekran (Registon) yuklangandan yoki intro boshlangandan keyin fonda yuklanadi.
+  // "Yuklandi" — React state emas, to'g'ridan-to'g'ri atribut: gidratsiya paytida o'zgaradigan store
+  // (document.readyState) React'ni butun sahifani bitta uzun vazifada qayta render qilishga majbur qilardi.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const go = () => el.setAttribute("data-load", "");
+    if (document.readyState === "complete") return go();
+    window.addEventListener("load", go, { once: true });
+    return () => window.removeEventListener("load", go);
+  }, []);
   return (
     <div
+      ref={ref}
       data-journey
-      data-load={loaded || intro ? "" : undefined}
+      data-load={intro ? "" : undefined}
       data-lite={lite ? "" : undefined}
       className="journey"
       aria-hidden

@@ -56,7 +56,7 @@ function Art({ colors, index }: { colors: string[]; index: number }) {
   return (
     <div className="relative size-full overflow-hidden" style={{ background: c }}>
       <div
-        className="absolute -inset-1/4 animate-[spin_14s_linear_infinite]"
+        className="art-spin absolute -inset-1/4"
         style={{
           // soft colour fields drawn by gradients — no blur filter on the spinning layer
           background: `radial-gradient(circle at ${30 + index * 7}% 32%, ${a} 0%, transparent 46%), radial-gradient(circle at 70% 58%, ${b} 0%, transparent 48%), radial-gradient(circle at 38% 78%, ${a} 0%, transparent 40%)`,
@@ -91,7 +91,7 @@ export function Projects() {
       mm.add("(min-width: 768px)", () => {
         gsap.utils.toArray<HTMLElement>("[data-row]").forEach((row) => {
           gsap.from(row, {
-            clipPath: "inset(0 0 100% 0)",
+            opacity: 0,
             y: 40,
             duration: 1.2,
             ease: "expo.out",
@@ -128,6 +128,7 @@ export function Projects() {
       id="loyihalar"
       className="relative overflow-x-clip bg-ink px-5 py-20 md:px-10 md:py-40"
       onPointerMove={(e) => {
+        if (active === null) return;
         x.set(e.clientX);
         y.set(e.clientY);
       }}
@@ -166,7 +167,14 @@ export function Projects() {
               data-row
               data-cursor="view"
               data-cursor-label="Ko‘rish"
-              onPointerEnter={() => setActive(i)}
+              onPointerEnter={(e) => {
+                // the preview appears right at the pointer, then follows it
+                if (active === null) {
+                  x.jump(e.clientX);
+                  y.jump(e.clientY);
+                }
+                setActive(i);
+              }}
               className="group relative flex flex-col-reverse justify-end overflow-hidden rounded-3xl border border-ivory/10 bg-ink-2 p-4 md:block md:overflow-visible md:rounded-none md:border-x-0 md:border-t-0 md:bg-transparent md:p-0"
             >
               <div className="absolute inset-0 origin-bottom scale-y-0 bg-ivory transition-transform duration-700 ease-expo group-hover:scale-y-100 max-md:hidden" />
@@ -206,8 +214,8 @@ export function Projects() {
             <motion.div
               key={active}
               className="absolute inset-0 overflow-hidden rounded-3xl shadow-[0_40px_120px_-20px_rgb(0_0_0/0.9)]"
-              initial={{ opacity: 0, scale: 0.6, rotate: -8, clipPath: "inset(50% 50% 50% 50% round 24px)" }}
-              animate={{ opacity: 1, scale: 1, rotate: 0, clipPath: "inset(0% 0% 0% 0% round 24px)" }}
+              initial={{ opacity: 0, scale: 0.6, rotate: -8 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
               exit={{ opacity: 0, scale: 0.8, rotate: 6 }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >

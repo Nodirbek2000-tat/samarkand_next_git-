@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { gsap, SplitText } from "@/lib/gsap";
-import { isLite } from "@/lib/perf";
+import { isLite, onLite } from "@/lib/perf";
 
 /**
  * Bosh sahifadagi barcha bo'lim sarlavhalari (h2) bir xil "kino" uslubida chiqadi: har bir qator
@@ -21,6 +21,8 @@ export function HeadingReveal() {
         for (const e of entries) {
           if (!e.isIntersecting) continue;
           io.unobserve(e.target);
+          // light mode may have been switched on by the preloader's frame probe after this was set up
+          if (isLite()) continue;
           const split = SplitText.create(e.target, {
             type: "lines",
             mask: "lines",
@@ -51,7 +53,9 @@ export function HeadingReveal() {
       { rootMargin: "0px 0px 25% 0px" },
     );
     document.querySelectorAll("main section h2:not([data-no-reveal])").forEach((h2) => io.observe(h2));
+    const offLite = onLite(() => io.disconnect());
     return () => {
+      offLite();
       io.disconnect();
       splits.forEach((s) => s.revert());
     };

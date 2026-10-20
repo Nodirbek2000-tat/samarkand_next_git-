@@ -15,6 +15,21 @@ const nextConfig: NextConfig = {
   images: {
     localPatterns: [{ pathname: "/media/**" }, { pathname: "/images/**" }],
     formats: ["image/avif", "image/webp"],
+    // nothing wider than 1920 px: a phone's "180svh × DPR 3" otherwise pulled the 3840 px candidate
+    deviceSizes: [640, 750, 828, 1080, 1200, 1600, 1920],
+    // optimized copies are kept a month (uploads get new file names, so they never go stale)
+    minimumCacheTTL: 2592000,
+  },
+  // Pictures in public/ are served with max-age=0 by default: every visit asked the server about each of
+  // them again. A week fresh, then shown from cache while it re-checks in the background. When a picture
+  // changes, give the file a new name (day-v2.webp → day-v3.webp) so visitors get it at once.
+  async headers() {
+    const week = "public, max-age=604800, stale-while-revalidate=2592000";
+    return [
+      ...["/images/:path*", "/textures/:path*"].map((source) => ({ source, headers: [{ key: "Cache-Control", value: week }] })),
+      // nginx passes streamed pages on chunk by chunk (the static shell first) instead of buffering them whole
+      { source: "/:path*{/}?", headers: [{ key: "X-Accel-Buffering", value: "no" }] },
+    ];
   },
   // Old site URLs keep working (bookmarks, search engines).
   async redirects() {

@@ -32,17 +32,20 @@ export function useCoverflow(ref: RefObject<HTMLElement | null>, query = "(max-w
     const update = () => {
       raf = 0;
       if (!mq.matches) return;
-      const box = rail.getBoundingClientRect();
-      const mid = box.left + box.width / 2;
-      for (const card of cards()) {
-        const r = card.getBoundingClientRect();
-        const d = Math.max(-1, Math.min(1, (r.left + r.width / 2 - mid) / box.width));
+      // read every card's place first, then write: layout boxes (the rail is their offsetParent) ignore the
+      // transforms written last frame, and no card forces a fresh style calculation for the next one
+      const list = cards();
+      const width = rail.clientWidth;
+      const mid = rail.scrollLeft + width / 2;
+      const offsets = list.map((card) => Math.max(-1, Math.min(1, (card.offsetLeft + card.offsetWidth / 2 - mid) / width)));
+      list.forEach((card, i) => {
+        const d = offsets[i];
         const a = Math.abs(d);
         // pivot on the edge nearest the centre, so the neighbours stay peeking in at the screen edges
         card.style.transformOrigin = d > 0 ? "0% 50%" : "100% 50%";
         card.style.transform = reduce ? "" : `perspective(1100px) rotateY(${(-d * 24).toFixed(2)}deg) scale(${(1 - a * 0.1).toFixed(3)})`;
         card.style.opacity = (1 - a * 0.4).toFixed(3);
-      }
+      });
     };
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(update);

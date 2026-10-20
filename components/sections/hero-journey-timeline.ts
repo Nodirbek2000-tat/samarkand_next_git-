@@ -1,7 +1,9 @@
 import { gsap, SplitText } from "@/lib/gsap";
 
 /**
- * Sayohat sahnalarini hero'ning scroll timeline'iga qo'shadi va tugash vaqtini qaytaradi.
+ * Sayohat sahnalarini hero'ning scroll timeline'iga qo'shadi. Qaytaradi: tugash vaqti va berilgan vaqtda
+ * ekranda harakatlanayotgan katta qatlamlar (kamera kadrlari, final karta) — ular faqat shu paytda
+ * GPU qatlamiga o'tkaziladi (lib/gpu-while-moving.ts).
  * Vaqt birliklari hero timeline bilan bir xil (darvoza qismi 0 → 1).
  *
  * Har bir bekat:  oldingisi chiqib ketayotganda ostidan yaqin plandan to'liq kadrga keladi →
@@ -13,6 +15,8 @@ import { gsap, SplitText } from "@/lib/gsap";
  */
 export function addJourney(tl: gsap.core.Timeline, scope: HTMLElement, at: number) {
   const q = gsap.utils.selector(scope);
+  // [from, to) on the timeline → layers that move on screen during it
+  const moving: { from: number; to: number; els: Element[] }[] = [];
   const random = gsap.utils.random;
   const scenes = q("[data-j-scene]");
   const last = scenes.length - 1;
@@ -45,6 +49,7 @@ export function addJourney(tl: gsap.core.Timeline, scope: HTMLElement, at: numbe
     // kirish masshtabi: sifat saqlanishi uchun mo'tadil (rasm keragidan ortiq cho'zilmaydi)
     const from = i === 0 ? 1.3 : after === "warp" ? 1.28 : 1.14;
     const pan = i % 2 ? 1 : -1;
+    moving.push({ from: s - 0.02, to: i === last ? Infinity : x + 0.23, els: [cam] });
 
     // ---- kirish: yaqin plandan to'liq kadrga (birinchisi darvoza nuridan chiqadi)
     if (i > 0) tl.set(scene, { autoAlpha: 1 }, s - 0.02);
@@ -114,11 +119,10 @@ export function addJourney(tl: gsap.core.Timeline, scope: HTMLElement, at: numbe
         );
     } else if (exit === "doors") {
       // eshik: kadr ikki tavaqaga bo'linib ichkariga ochiladi — Registon darvozasiga ishora
-      tl.to(pieces[0], { rotationY: -100, xPercent: -6, "--shade": 1, ease: "power3.inOut", duration: 0.21 }, x).to(
-        pieces[1],
-        { rotationY: 100, xPercent: 6, "--shade": 1, ease: "power3.inOut", duration: 0.21 },
-        x,
-      );
+      // each leaf darkens as it turns away from the light (its own shade layer: an opacity tween, not a repaint)
+      tl.to(pieces[0], { rotationY: -100, xPercent: -6, ease: "power3.inOut", duration: 0.21 }, x)
+        .to(pieces[1], { rotationY: 100, xPercent: 6, ease: "power3.inOut", duration: 0.21 }, x)
+        .to([pieces[0], pieces[1]].map((p) => p.querySelector(".j-piece-shade")), { opacity: 1, ease: "power3.inOut", duration: 0.21 }, x);
     }
     // chiqib bo'lgan bekat endi kerak emas
     tl.set(scene, { autoAlpha: 0 }, x + 0.23);
@@ -127,6 +131,7 @@ export function addJourney(tl: gsap.core.Timeline, scope: HTMLElement, at: numbe
   // ---------- Final: Imom al-Buxoriy kartaga aylanib sahifaga qo'nadi ----------
   const fin = scenes[last];
   const F0 = at + last * STAY + STAY; // to'liq kadr yetarlicha ko'rindi
+  moving.push({ from: F0, to: Infinity, els: [fin, ...q(".j-girih")] });
   const words = SplitText.create(q("[data-j-outro-words]"), { type: "words,chars", mask: "words" });
   tl.to(fin.querySelector("[data-j-copy]"), { autoAlpha: 0, y: -44, ease: "power2.in", duration: 0.05 }, F0 - 0.05)
     .to(fin.querySelector(".j-shade"), { autoAlpha: 0, duration: 0.1 }, F0)
@@ -146,5 +151,8 @@ export function addJourney(tl: gsap.core.Timeline, scope: HTMLElement, at: numbe
 
   // biroz ushlab turamiz — keyin pin tugaydi va sahifa davom etadi
   tl.set({}, {}, F0 + 0.42);
-  return F0 + 0.42;
+  return {
+    end: F0 + 0.42,
+    layersAt: (t: number) => moving.filter((m) => t >= m.from && t < m.to).flatMap((m) => m.els),
+  };
 }

@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
 import { gsap, ScrollTrigger, SplitText, useGSAP } from "@/lib/gsap";
 import { gpuWhileMoving } from "@/lib/gpu-while-moving";
+import { isLite } from "@/lib/perf";
 import { useIntroDone } from "@/lib/store";
 import { useTheme } from "@/lib/theme";
 import { Magnetic } from "@/components/magnetic";
@@ -33,11 +34,14 @@ export function Hero() {
 
   // the whole stage leans gently with the pointer
   useEffect(() => {
-    const el = root.current?.querySelector<HTMLElement>("[data-hero-parallax]");
-    if (!el || !window.matchMedia("(pointer: fine)").matches) return;
+    const section = root.current;
+    const el = section?.querySelector<HTMLElement>("[data-hero-parallax]");
+    if (!section || !el || !window.matchMedia("(pointer: fine)").matches) return;
     const qx = gsap.quickTo(el, "xPercent", { duration: 1.2, ease: "power3" });
     const qy = gsap.quickTo(el, "yPercent", { duration: 1.2, ease: "power3" });
     const move = (e: PointerEvent) => {
+      // once the camera has moved in (data-hero-past) the stage is out of sight: nothing to lean
+      if (section.hasAttribute("data-hero-past")) return;
       qx(-((e.clientX / window.innerWidth) * 2 - 1) * 1.1);
       qy(-((e.clientY / window.innerHeight) * 2 - 1) * 0.7);
     };
@@ -60,6 +64,8 @@ export function Hero() {
         return Math.min(z, fitW, fitH);
       };
       const random = gsap.utils.random;
+      const lite = isLite();
+      const q = gsap.utils.selector(root);
       // how far the portal sits below the viewport's optical centre, so the camera re-centres on
       // the door while it closes in (measured unscaled: the stage box ignores the zoom layer)
       const lift = () => {
@@ -82,12 +88,9 @@ export function Hero() {
         )
         .fromTo("[data-hero-vignette]", { opacity: 0 }, { opacity: 1, ease: "power1.inOut", duration: 0.3 }, 0.06)
         // 2 — the door wakes: light climbs the carving from the threshold to the apex
-        .fromTo(
-          "[data-gate-charge]",
-          { opacity: 0, "--charge": "-25%" },
-          { opacity: 1, "--charge": "130%", ease: "power1.inOut", duration: 0.2 },
-          0.18,
-        )
+        // (a window slides up over a glow that stays put: two counter-moving transforms, no mask redrawn)
+        .fromTo("[data-gate-charge]", { opacity: 0, yPercent: 125 }, { opacity: 1, yPercent: -30, ease: "power1.inOut", duration: 0.2 }, 0.18)
+        .fromTo("[data-gate-charge] > span", { yPercent: -125 }, { yPercent: 30, ease: "power1.inOut", duration: 0.2 }, 0.18)
         // 3 — the medallion flares, light forces the seam, the gate strains against it
         .fromTo(
           "[data-gate-lock]",
@@ -125,14 +128,15 @@ export function Hero() {
           0.46,
         )
         .to("[data-gate-spill]", { opacity: 1, ease: "power2.out", duration: 0.12 }, 0.46)
-        .fromTo("[data-gate-pool]", { opacity: 0, scaleY: 0.35 }, { opacity: 1, scaleY: 1, ease: "power2.out", duration: 0.14 }, 0.47)
-        .fromTo(
+        .fromTo("[data-gate-pool]", { opacity: 0, scaleY: 0.35 }, { opacity: 1, scaleY: 1, ease: "power2.out", duration: 0.14 }, 0.47);
+      // rays and sparks: not on weak machines (they are hidden there — nothing to compute either)
+      if (!lite)
+        tl.fromTo(
           "[data-gate-rays]",
           { opacity: 0, scale: 0.3, rotate: -20 },
           { opacity: 1, scale: 1.25, rotate: 25, ease: "power2.out", duration: 0.32 },
           0.47,
-        )
-        .fromTo(
+        ).fromTo(
           "[data-gate-spark]",
           { opacity: 1, xPercent: -50, yPercent: -50, scale: 0.4 },
           {
@@ -145,22 +149,31 @@ export function Hero() {
             stagger: 0.004,
           },
           0.47,
-        )
-        // 5 — through the gate, into the light
-        .to("[data-hero-zoom]", { scale: () => Z() * 4.6, ease: "power3.in", duration: 0.26, force3D: false }, 0.58)
+        );
+      // 5 — through the gate, into the light
+      tl.to("[data-hero-zoom]", { scale: () => Z() * 4.6, ease: "power3.in", duration: 0.26, force3D: false }, 0.58)
         .to("[data-hero-flash]", { opacity: 1, ease: "power2.in", duration: 0.12 }, 0.7)
         .to("[data-hero-flash]", { opacity: 0, ease: "power1.out", duration: 0.14 }, 0.86);
 
       // 6 — out of the light: arch after arch through Khoja Daniyar, the airport and the Silk Road
       // to the Imam al-Bukhari complex, which shatters into mosaic — then the page takes over
-      if (section) addJourney(tl, section, 0.84);
+      const journey = section ? addJourney(tl, section, 0.84) : null;
 
       // The pin is created once, after the timeline is complete, so its length is right from the first
       // layout (gate pace: 2.6 screens per timeline unit). It refreshes before every other trigger:
       // all the pinned sections below are positioned after it, so if it were measured late they would
       // slide over each other.
-      // the photo, door and reflection are not re-drawn every frame while the camera moves
-      const stopGpu = gpuWhileMoving(tl, [section?.querySelector("[data-hero-zoom]")]);
+      // while the scroll moves things, what moves on screen right then is a GPU texture — the photo with
+      // the door until the gate scene is hidden, the climbing gold light, then the journey's frames
+      const zoom = q("[data-hero-zoom]")[0];
+      const charges = q("[data-gate-charge], [data-gate-charge] > span");
+      const stopGpu = gpuWhileMoving(tl, (t) => [
+        ...(t < 0.95 ? [zoom] : []),
+        ...(t > 0.16 && t < 0.42 ? charges : []),
+        ...(journey ? journey.layersAt(t) : []),
+      ]);
+      // past the opening frame: the sky's endless loops pause and the pointer lean stops (CSS + listener)
+      let past = false;
 
       ScrollTrigger.create({
         trigger: section,
@@ -172,6 +185,11 @@ export function Hero() {
         invalidateOnRefresh: true,
         refreshPriority: 1,
         animation: tl,
+        onUpdate: (self) => {
+          if (past === self.progress > 0.02) return;
+          past = !past;
+          section?.toggleAttribute("data-hero-past", past);
+        },
       });
       return stopGpu;
     },
@@ -181,11 +199,14 @@ export function Hero() {
   // the theme swaps the photograph and the door geometry (CSS vars): re-measure instead of rebuilding
   // the pinned timeline — rebuilding it would re-create the pin after the sections below it.
   // Not on mount: the page measures everything once when fonts and images are in (SmoothScroll).
-  const measuredTheme = useRef(theme);
+  // (Compared with the real theme on <html>: during hydration the hook first reports the server's "light",
+  // which made dark-theme visitors pay a full re-measure at load.)
+  const measuredTheme = useRef<string | null>(null);
   useEffect(() => {
-    if (measuredTheme.current === theme) return;
-    measuredTheme.current = theme;
-    ScrollTrigger.refresh();
+    const now = document.documentElement.dataset.theme ?? "light";
+    const before = measuredTheme.current;
+    measuredTheme.current = now;
+    if (before !== null && before !== now) ScrollTrigger.refresh();
   }, [theme]);
 
   // cinematic intro once the preloader curtain lifts
@@ -196,18 +217,22 @@ export function Hero() {
         return;
       }
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      // weak machines: a shorter, straighter swoop, no light sweep across the title, lights simply fade
+      const lite = isLite();
 
       // the camera swoops down onto the plaza (one composited layer: scale + a slight bank)
       gsap.fromTo(
         "[data-hero-parallax]",
-        { scale: reduce ? 1 : 1.34, rotate: reduce ? 0 : -1.4, transformOrigin: "50% 62%" },
-        { scale: 1, rotate: 0, duration: 3.2, ease: "expo.out" },
+        { scale: reduce ? 1 : lite ? 1.16 : 1.34, rotate: reduce || lite ? 0 : -1.4, transformOrigin: "50% 62%" },
+        { scale: 1, rotate: 0, duration: lite ? 2 : 3.2, ease: "expo.out" },
       );
 
       // the square comes alive: night — the lights switch on from the gate outward (with a flicker);
       // day — the morning haze burns off and the sun sweeps across the facades
       if (reduce) {
         gsap.set(["[data-hero-lights]", "[data-hero-haze]"], { autoAlpha: 0 });
+      } else if (lite) {
+        gsap.to(["[data-hero-lights]", "[data-hero-haze]"], { autoAlpha: 0, duration: 1.4, ease: "power2.inOut" });
       } else {
         gsap
           .timeline()
@@ -244,9 +269,9 @@ export function Hero() {
           stagger: { each: 0.05, from: "center" },
         })
         // SAMARQAND slams in from oversize and settles, then a single sheen runs across it
-        .from("[data-hero-gradient]", { yPercent: 110, scale: 1.45, skewY: 7, duration: 1.5, ease: "expo.out" }, 0.22)
-        .fromTo("[data-hero-gradient]", { backgroundPosition: "0% 0" }, { backgroundPosition: "100% 0", duration: 2.2, ease: "power2.inOut" }, 1.1)
-        .from("[data-hero-line]", { scaleX: 0, transformOrigin: "50% 50%", duration: 1.4, ease: "expo.inOut" }, 0.2)
+        .from("[data-hero-gradient]", { yPercent: 110, scale: 1.45, skewY: 7, duration: 1.5, ease: "expo.out" }, 0.22);
+      if (!lite) tl.fromTo("[data-hero-gradient]", { backgroundPosition: "0% 0" }, { backgroundPosition: "100% 0", duration: 2.2, ease: "power2.inOut" }, 1.1);
+      tl.from("[data-hero-line]", { scaleX: 0, transformOrigin: "50% 50%", duration: 1.4, ease: "expo.inOut" }, 0.2)
         .from("[data-hero-fade]", { y: 30, autoAlpha: 0, duration: 1.1, ease: "expo.out", stagger: 0.09 }, 0.6);
     },
     { scope: root, dependencies: [intro] },
@@ -258,11 +283,13 @@ export function Hero() {
       <div data-hero-parallax className="hero-parallax pointer-events-none absolute -inset-[2%]">
         <div className="hero-stage">
           <div data-hero-zoom className="absolute inset-0" style={{ transformOrigin: "var(--zoom-origin)" }}>
+            {/* one photo per theme (the other is display:none): both lazy + high priority, so only the
+                visible one downloads — a preload would fetch the day photo for night visitors too */}
             <Image
               src="/images/registan/day-v2.webp"
               alt="Registon maydoni: Ulug‘bek, Tillakori va Sherdor madrasalari"
               fill
-              priority
+              fetchPriority="high"
               sizes="(max-aspect-ratio: 16/9) 180svh, 104vw"
               className="only-day object-cover"
             />
@@ -270,6 +297,7 @@ export function Hero() {
               src="/images/registan/night-v2.webp"
               alt="Kechki Registon: yoritilgan madrasalar"
               fill
+              fetchPriority="high"
               sizes="(max-aspect-ratio: 16/9) 180svh, 104vw"
               className="only-night object-cover"
             />
@@ -380,7 +408,6 @@ export function Hero() {
         data-hero-flash
         className="pointer-events-none absolute inset-0 z-20 bg-[radial-gradient(circle_at_50%_55%,#fffaf0_0%,#ffd98a_28%,var(--color-ink)_78%)] opacity-0"
       />
-      <div data-hero-ink className="pointer-events-none absolute inset-0 z-20 bg-ink opacity-0" />
     </section>
   );
 }

@@ -22,6 +22,9 @@ services:
     environment:
       DJANGO_URL: http://backend:8000
       NEXT_REVALIDATE_SECRET: ${NEXT_REVALIDATE_SECRET:?.env da NEXT_REVALIDATE_SECRET kerak}
+    volumes:
+      # optimallashtirilgan rasmlar keshi deploydan keyin ham qoladi (har safar qaytadan tayyorlanmaydi)
+      - next_cache:/app/.next/cache
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/kirish"]
       interval: 15s
@@ -40,6 +43,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      # HTTP/3 (QUIC) — serverda: ufw allow 443/udp
+      - "443:443/udp"
     environment:
       CERTBOT_EMAIL: ${CERTBOT_EMAIL:?.env da CERTBOT_EMAIL kerak (Let's Encrypt xabarlari uchun)}
       STAGING: ${CERTBOT_STAGING:-0}
@@ -58,6 +63,7 @@ networks:
 
 volumes:
   letsencrypt:
+  next_cache:
   media:
     name: mentadbirkor_media
     external: true

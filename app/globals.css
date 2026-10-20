@@ -158,6 +158,13 @@ html.lenis body {
 .marquee-reverse {
   animation-direction: reverse;
 }
+/* the rows lean with the scroll speed (marquee.tsx) — not on weak machines, where nothing leans */
+.marquee-skew {
+  will-change: transform;
+}
+html[data-lite] .marquee-skew {
+  will-change: auto;
+}
 @keyframes marquee {
   to { transform: translate3d(-50%, 0, 0); }
 }
@@ -207,7 +214,8 @@ html.lenis body {
   --rblur: 0px;
   --zoom-origin: 49.58% 57.94%;
   --zoom: 3.9;
-  --gate-door: url("/images/gate/door-day.webp");
+  /* AVIF where supported (~45% smaller); phones get a 720 px door below — scripts/optimize-door-images.mjs */
+  --gate-door: image-set(url("/images/gate/door-day.avif") type("image/avif"), url("/images/gate/door-day.webp") type("image/webp"));
   --stage-w: max(100cqw, calc(100cqh * var(--ar)));
   position: absolute;
   left: var(--fx);
@@ -229,7 +237,16 @@ html.lenis body {
   --rblur: 1.2px;
   --zoom-origin: 51.32% 52.56%;
   --zoom: 4.25;
-  --gate-door: url("/images/gate/door-night.webp");
+  --gate-door: image-set(url("/images/gate/door-night.avif") type("image/avif"), url("/images/gate/door-night.webp") type("image/webp"));
+}
+/* phones: the door is never wider than ~350 px there, even in the close-up */
+@media (max-width: 767px) {
+  .hero-stage {
+    --gate-door: image-set(url("/images/gate/door-day-sm.avif") type("image/avif"), url("/images/gate/door-day-sm.webp") type("image/webp"));
+  }
+  :root[data-theme="dark"] .hero-stage {
+    --gate-door: image-set(url("/images/gate/door-night-sm.avif") type("image/avif"), url("/images/gate/door-night-sm.webp") type("image/webp"));
+  }
 }
 :root:not([data-theme="dark"]) .only-night,
 :root[data-theme="dark"] .only-day {
@@ -262,24 +279,40 @@ html.lenis body {
 .gate-gild {
   position: absolute;
   inset: 0;
-  background: url("/images/gate/door-glow.webp") 0 0 / 100% 100% no-repeat;
+  background: 0 0 / 100% 100% no-repeat;
   mix-blend-mode: screen;
   opacity: 0;
   pointer-events: none;
 }
+/* the glow is only seen after the intro: it does not compete with the first screen's pictures */
+[data-intro="true"] :is(.gate-gild, .gate-charge > span) {
+  background-image: image-set(url("/images/gate/door-glow.avif") type("image/avif"), url("/images/gate/door-glow.webp") type("image/webp"));
+}
 /* the gilding breathes once the intro has played — the door is alive before anyone scrolls */
-[data-intro="true"] .gate-gild:not(.gate-charge) {
+[data-intro="true"] .gate-gild {
   animation: gild 4.8s ease-in-out 1.6s infinite alternate both;
 }
 @keyframes gild {
   from { opacity: 0.08; }
   to { opacity: 0.5; }
 }
-/* scroll charge: light climbs the carving from the threshold to the apex (--charge is tweened) */
+/* scroll charge: light climbs the carving from the threshold to the apex. A window with a soft top edge
+   slides up while the glow inside slides down by as much, so the glow stays put on the carving — two
+   transforms (GPU) instead of a gradient mask redrawn every frame. */
 .gate-charge {
-  --charge: -25%;
-  -webkit-mask-image: linear-gradient(to top, #000 calc(var(--charge) - 30%), transparent var(--charge));
-  mask-image: linear-gradient(to top, #000 calc(var(--charge) - 30%), transparent var(--charge));
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%);
+  mask-image: linear-gradient(to bottom, transparent, #000 30%);
+}
+.gate-charge > span {
+  position: absolute;
+  inset: 0;
+  background: 0 0 / 100% 100% no-repeat;
 }
 /* leaves fall into silhouette against the light as they swing (hinge side darkest) */
 .gate-dim {
@@ -475,6 +508,26 @@ html.lenis body {
   background: linear-gradient(105deg, transparent 10%, rgb(255 236 200 / 0.55) 50%, transparent 90%);
 }
 
+/* big layers whose opacity the hero timeline tweens get their own GPU layer: a fade never repaints the photo */
+[data-hero-vignette],
+[data-hero-shade],
+[data-hero-flash],
+.hero-haze,
+.hero-lights,
+.gate-spill,
+.gate-hall,
+.gate-dim,
+.j-shade {
+  will-change: opacity;
+}
+.gate-pool {
+  will-change: transform, opacity;
+}
+/* past the opening frame the sky is out of sight: its endless loops wait (hero.tsx sets data-hero-past) */
+[data-hero-past] :is(.hero-star, .hero-meteor, .hero-gloss > span, .gate-gild) {
+  animation-play-state: paused;
+}
+
 /* Top navigation progress bar (components/nav-progress.tsx) */
 .nav-progress {
   position: fixed;
@@ -523,14 +576,44 @@ html.lenis body {
   }
 }
 
+/* Inner pages settle in on every navigation (app/(site)/template.tsx) — pure CSS, so the HTML shows at once */
+@media (prefers-reduced-motion: no-preference) {
+  .page-in {
+    animation: page-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
 /* ------------------------------------------------------------------ Yengil rejim (lib/perf.ts)
    Eski kompyuter, kam xotira yoki sekin internet: og'ir bezaklar o'chadi — sahifa, rasm va asosiy
    harakatlar qoladi. Har kadrda qayta chiziladigan narsalar (blur, cheksiz porlash, uchqunlar) yo'q. */
 html[data-lite] .gate-mirror {
   filter: none;
 }
-html[data-lite] :is(.gate-gild, .spin-slow, .spin-slower, .orb, .text-gradient) {
+html[data-lite] :is(.gate-gild, .spin-slow, .spin-slower, .orb, .text-gradient, .hero-star, .hero-gloss > span) {
   animation: none !important;
+}
+html[data-lite] .hero-meteor {
+  display: none;
+}
+/* soft shadows are painted, not composited: flat chips on weak machines; no blended foil over the cards */
+html[data-lite] .glass {
+  box-shadow: none;
+}
+html[data-lite] .tier-foil {
+  display: none;
+}
+/* project art: the colour field turns slowly (stopped on weak machines) */
+.art-spin {
+  animation: spin 14s linear infinite;
+}
+html[data-lite] .art-spin {
+  animation: none;
 }
 html[data-lite] :is(.gate-sparks, .gate-rays, .hero-ring, .j-streaks, .grain) {
   display: none;
@@ -732,15 +815,15 @@ html[data-lite] :is(.gate-sparks, .gate-rays, .hero-ring, .j-streaks, .grain) {
 .j-scene[data-exit="doors"] [data-j-split] > span:last-child {
   transform-origin: 100% 50%;
 }
-/* ochilayotgan tavaqa yorug'likdan uzoqlashib qorayadi */
-.j-scene[data-exit="doors"] [data-j-split] > span::after {
-  content: "";
+/* ochilayotgan tavaqa yorug'likdan uzoqlashib qorayadi (o'z qatlamida: faqat opacity o'zgaradi) */
+.j-piece-shade {
   position: absolute;
   inset: 0;
-  opacity: var(--shade, 0);
+  opacity: 0;
+  will-change: opacity;
   background: linear-gradient(to right, rgb(3 5 11 / 0.15), rgb(3 5 11 / 0.85));
 }
-.j-scene[data-exit="doors"] [data-j-split] > span:first-child::after {
+[data-j-split] > span:first-child > .j-piece-shade {
   background: linear-gradient(to left, rgb(3 5 11 / 0.15), rgb(3 5 11 / 0.85));
 }
 .j-streaks {
@@ -961,12 +1044,19 @@ html[data-lite] :is(.gate-sparks, .gate-rays, .hero-ring, .j-streaks, .grain) {
 }
 
 /* meetings timeline node: GSAP tweens --lit 0 → 1; colours follow the theme accent */
+/* the meeting timeline's node: dark until its step arrives, then the glow (painted once) fades in */
 .meet-node {
-  --lit: 0;
-  background: color-mix(in oklab, var(--color-turq) calc(var(--lit) * 100%), var(--color-ink));
+  background: var(--color-ink);
+}
+.meet-glow {
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  opacity: 0;
+  background: var(--color-turq);
   box-shadow:
-    0 0 0 calc(var(--lit) * 8px) color-mix(in oklab, var(--color-turq) 16%, transparent),
-    0 0 calc(var(--lit) * 36px) color-mix(in oklab, var(--color-turq) 60%, transparent);
+    0 0 0 8px color-mix(in oklab, var(--color-turq) 16%, transparent),
+    0 0 36px color-mix(in oklab, var(--color-turq) 60%, transparent);
 }
 
 /* phone carousels: a vertical stack of cards becomes one swipeable, snapping row (much less page
@@ -974,6 +1064,7 @@ html[data-lite] :is(.gate-sparks, .gate-rays, .hero-ring, .j-streaks, .grain) {
 @media (max-width: 767px) {
   .rail {
     --card: min(78vw, 380px);
+    position: relative; /* the cards' offsetParent: components/coverflow.tsx measures them from here */
     display: flex;
     gap: 0.75rem;
     margin-inline: calc(50% - 50vw);
@@ -991,6 +1082,7 @@ html[data-lite] :is(.gate-sparks, .gate-rays, .hero-ring, .j-streaks, .grain) {
 @media (max-width: 1023px) {
   .rail-lg {
     --card: min(78vw, 400px);
+    position: relative;
     display: flex;
     gap: 0.75rem;
     margin-inline: calc(50% - 50vw);

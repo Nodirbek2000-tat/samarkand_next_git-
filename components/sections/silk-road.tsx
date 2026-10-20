@@ -5,14 +5,20 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { isLite } from "@/lib/perf";
+import { introStore } from "@/lib/store";
 import { CITIES, SAMARKAND, distanceKm } from "@/lib/silk-road";
 import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const loadGlobe = () => import("@/components/three/globe-scene");
 const GlobeScene = dynamic(loadGlobe, { ssr: false, loading: () => null });
-/** what the 3D globe downloads — fetched ahead so it is ready when the visitor arrives */
+/** what the 3D globe downloads (desktop maps — phones keep the picture) — fetched ahead */
 const GLOBE_FILES = ["/textures/earth/day-2k.webp", "/textures/earth/night-2k.webp", "/textures/earth/clouds.webp"];
+/** a moment counts as calm when nobody has scrolled for this long (a reading pause, not a brief stop mid-scroll) */
+const CALM_MS = 1200;
+
+/** one formatter for every counter frame; the text is only written when the number changes */
+const FMT = new Intl.NumberFormat("ru-RU");
 
 const ROUTES = CITIES.map((c) => ({ ...c, km: distanceKm(SAMARKAND, c) })).sort((a, b) => a.km - b.km);
 
@@ -20,39 +26,78 @@ export function SilkRoad() {
   const root = useRef<HTMLElement>(null);
   const progress = useRef(0);
   const [active, setActive] = useState(false);
-  // The picture of the globe is there at once. The live WebGL globe (three.js + NASA textures) is
-  // fetched about three screens ahead, mounted one screen ahead and fades in over the picture when its
-  // first frame is drawn. Older computers keep the picture: no 3D at all.
+  // The picture of the globe is there at once. The live WebGL globe (three.js + NASA textures) only on
+  // capable computers: prepared in calm moments after the intro (download + start-up, then the GPU upload
+  // on mount), so none of that lands in the middle of someone's scroll; it fades in over the picture
+  // once its first frame is drawn and only draws continuously while on screen. Phones and older
+  // computers keep the picture: no 3D at all.
   const [seen, setSeen] = useState(false);
   const [ready, setReady] = useState(false);
   const theme = useTheme();
 
   useEffect(() => {
     const el = root.current;
-    if (!el || isLite()) return;
+    if (!el || isLite() || window.matchMedia("(max-width: 767px)").matches) return;
+
     let warmed = false;
-    const warm = new IntersectionObserver(
-      ([e]) => {
-        if (!e.isIntersecting || warmed) return;
-        warmed = true;
-        warm.disconnect();
-        loadGlobe();
-        GLOBE_FILES.forEach((url) => fetch(url).catch(() => {}));
-      },
-      { rootMargin: "300% 0px" },
-    );
-    const io = new IntersectionObserver(
-      ([e]) => {
-        setActive(e.isIntersecting);
-        if (e.isIntersecting) setSeen(true);
-      },
-      { rootMargin: "100% 0px" },
-    );
-    warm.observe(el);
-    io.observe(el);
+    const warm = () => {
+      if (warmed) return;
+      warmed = true;
+      loadGlobe();
+      GLOBE_FILES.forEach((url) => fetch(url).catch(() => {}));
+    };
+    const mount = () => {
+      warm();
+      setSeen(true);
+    };
+
+    // calm moments: step 1 downloads and starts three.js, step 2 mounts the globe (shaders + maps go to the GPU)
+    let lastScroll = performance.now();
+    const onScroll = () => (lastScroll = performance.now());
+    window.addEventListener("scroll", onScroll, { passive: true });
+    let step = 0;
+    let timer = 0;
+    const tick = () => {
+      // light mode may have been switched on by the preloader's frame probe: keep the picture then
+      if (isLite() || step > 1) return;
+      if (performance.now() - lastScroll < CALM_MS) {
+        timer = window.setTimeout(tick, CALM_MS);
+        return;
+      }
+      const run = () => {
+        if (performance.now() - lastScroll < CALM_MS) return void (timer = window.setTimeout(tick, CALM_MS));
+        if (step++ === 0) warm();
+        else mount();
+        timer = window.setTimeout(tick, 1500);
+      };
+      if ("requestIdleCallback" in window) window.requestIdleCallback(run, { timeout: 2000 });
+      else run();
+    };
+    // after the intro has played (≈2 s), so it never competes with the first screen
+    let started = false;
+    const startCalm = () => {
+      if (started || !introStore.get()) return;
+      started = true;
+      timer = window.setTimeout(tick, 2500);
+    };
+    const offIntro = introStore.subscribe(startCalm);
+    startCalm();
+
+    // fallbacks for a visitor who never pauses: fetch three screens ahead, mount one screen ahead
+    const near = new IntersectionObserver(([e]) => e.isIntersecting && !isLite() && warm(), { rootMargin: "300% 0px" });
+    const close = new IntersectionObserver(([e]) => e.isIntersecting && !isLite() && mount(), { rootMargin: "100% 0px" });
+    // draw continuously only while it is actually on screen
+    const visible = new IntersectionObserver(([e]) => setActive(e.isIntersecting));
+    near.observe(el);
+    close.observe(el);
+    visible.observe(el);
     return () => {
-      warm.disconnect();
-      io.disconnect();
+      offIntro();
+      window.clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
+      near.disconnect();
+      close.disconnect();
+      visible.disconnect();
     };
   }, []);
 
@@ -73,12 +118,18 @@ export function SilkRoad() {
       });
       gsap.utils.toArray<HTMLElement>("[data-km]").forEach((el) => {
         const v = { n: 0 };
+        let shown = -1;
         gsap.to(v, {
           n: Number(el.dataset.km),
           duration: 2,
           ease: "expo.out",
           scrollTrigger: { trigger: el, start: "top 90%" },
-          onUpdate: () => (el.textContent = Math.round(v.n).toLocaleString("ru-RU")),
+          onUpdate: () => {
+            const n = Math.round(v.n);
+            if (n === shown) return;
+            shown = n;
+            el.textContent = FMT.format(n);
+          },
         });
       });
     },

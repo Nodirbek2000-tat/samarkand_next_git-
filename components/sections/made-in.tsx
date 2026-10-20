@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { ArrowUpRight, BookOpen, Languages, Factory, BadgeCheck, MapPin, Users } from "lucide-react";
 import { gsap, useGSAP } from "@/lib/gsap";
+import { gpuWhileMoving } from "@/lib/gpu-while-moving";
 import { Magnetic } from "@/components/magnetic";
 import { Roll } from "@/components/roll";
 
@@ -30,6 +31,8 @@ export function MadeIn() {
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
+      // the huge "406" and the girih ring scale with the scroll: GPU textures while they move, sharp at rest
+      const q = gsap.utils.selector(root);
       mm.add("(min-width: 768px)", () => {
         const tl = gsap.timeline({
           scrollTrigger: { trigger: "[data-mi-stage]", start: "top top", end: "+=140%", pin: true, scrub: 1 },
@@ -38,10 +41,11 @@ export function MadeIn() {
           .fromTo("[data-mi-ring]", { rotate: -90, scale: 0.6 }, { rotate: 90, scale: 1.15, ease: "none", duration: 1 }, 0)
           .from("[data-mi-chip]", { opacity: 0, y: 40, stagger: 0.04, duration: 0.3 }, 0.35)
           .to("[data-mi-num]", { yPercent: -18, duration: 0.5 }, 0.5);
+        return gpuWhileMoving(tl, [...q("[data-mi-num]"), ...q("[data-mi-ring]")]);
       });
       // phones: no pin (shorter page) — the number and the girih ring are scrubbed by the page scroll instead
       mm.add("(max-width: 767px)", () => {
-        gsap.fromTo(
+        const num = gsap.fromTo(
           "[data-mi-num]",
           { scale: 0.4, opacity: 0.2, rotate: -6 },
           {
@@ -52,7 +56,7 @@ export function MadeIn() {
             scrollTrigger: { trigger: "[data-mi-stage]", start: "top 90%", end: "center 55%", scrub: 1 },
           },
         );
-        gsap.fromTo(
+        const ring = gsap.fromTo(
           "[data-mi-ring]",
           { rotate: -120, scale: 0.6 },
           {
@@ -68,6 +72,12 @@ export function MadeIn() {
           stagger: 0.05,
           scrollTrigger: { trigger: "[data-mi-chips]", start: "top 85%" },
         });
+        const stopNum = gpuWhileMoving(num, q("[data-mi-num]"));
+        const stopRing = gpuWhileMoving(ring, q("[data-mi-ring]"));
+        return () => {
+          stopNum();
+          stopRing();
+        };
       });
 
       gsap.from("[data-mi-field]", {
@@ -98,7 +108,7 @@ export function MadeIn() {
           aria-hidden
         >
           {Array.from({ length: 24 }).map((_, i) => (
-            <rect key={i} x="80" y="80" width="240" height="240" transform={`rotate(${i * 3.75} 200 200)`} opacity={0.3 + (i % 3) * 0.2} />
+            <rect key={i} x="80" y="80" width="240" height="240" transform={`rotate(${i * 3.75} 200 200)`} strokeOpacity={0.3 + (i % 3) * 0.2} />
           ))}
           <circle cx="200" cy="200" r="196" style={{ stroke: "var(--color-turq)" }} />
         </svg>

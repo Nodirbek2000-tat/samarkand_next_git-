@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { Award, Handshake, HeartHandshake, Lightbulb, Sprout, ArrowUpRight } from "lucide-react";
 import { gsap, useGSAP } from "@/lib/gsap";
+import { followPointer, leavePointer, spotlightAt } from "@/lib/pointer";
 import { useCoverflow, SwipeHint } from "@/components/coverflow";
 
 // the council's five official directions (client document, also the "values" on /about)
@@ -79,9 +80,11 @@ export function Directions() {
       mm.add("(min-width: 1024px)", () => {
         const el = track.current!;
         const distance = () => el.scrollWidth - window.innerWidth;
+        // force3D: the long track stays one GPU layer (no 2D↔3D switch and full repaint at the pin's ends)
         const tween = gsap.to(el, {
           x: () => -distance(),
           ease: "none",
+          force3D: true,
           scrollTrigger: {
             trigger: root.current,
             start: "top top",
@@ -146,21 +149,9 @@ export function Directions() {
     { scope: root },
   );
 
-  // mouse-only tilt on the pinned desktop row (touch would fight the carousel swipe)
-  const tilt = (e: React.PointerEvent<HTMLElement>) => {
-    if (e.pointerType !== "mouse" || window.innerWidth < 1024) return;
-    const el = e.currentTarget;
-    const r = el.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    el.style.setProperty("--mx", `${e.clientX - r.left}px`);
-    el.style.setProperty("--my", `${e.clientY - r.top}px`);
-    gsap.to(el, { rotateY: px * 10, rotateX: -py * 10, duration: 0.6, ease: "power3" });
-  };
-  const untilt = (e: React.PointerEvent<HTMLElement>) => {
-    if (e.pointerType !== "mouse" || window.innerWidth < 1024) return;
-    gsap.to(e.currentTarget, { rotateX: 0, rotateY: 0, duration: 1, ease: "elastic.out(1, 0.4)" });
-  };
+  // mouse-only tilt + spotlight on the pinned desktop row (touch would fight the carousel swipe)
+  const tilt = (e: React.PointerEvent<HTMLElement>) => window.innerWidth >= 1024 && followPointer(e, spotlightAt, 10);
+  const untilt = (e: React.PointerEvent<HTMLElement>) => window.innerWidth >= 1024 && leavePointer(e);
 
   return (
     <section ref={root} id="yonalishlar" className="relative overflow-hidden bg-ink-2 lg:h-svh">
@@ -203,7 +194,7 @@ export function Directions() {
               <div className="spotlight pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
               <div
                 data-dir-art
-                className="pointer-events-none absolute -right-24 -top-24 size-80 opacity-40 transition-opacity duration-700 group-hover:opacity-80"
+                className="pointer-events-none absolute -right-24 -top-24 size-80 opacity-40 transition-opacity duration-700 will-change-transform group-hover:opacity-80"
               >
                 <Pattern color={hue} />
               </div>
@@ -215,7 +206,7 @@ export function Directions() {
                   {tag}
                 </span>
               </div>
-              <div className="relative mt-10 [transform:translateZ(40px)] lg:mt-0">
+              <div className="relative mt-10 lg:mt-0">
                 <span
                   className="mb-6 grid size-14 place-items-center rounded-2xl"
                   style={{ background: `color-mix(in oklab, ${hue} 18%, transparent)`, color: hue }}

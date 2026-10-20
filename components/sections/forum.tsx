@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowUpRight, Award, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
@@ -70,6 +70,10 @@ export function Forum() {
       const mm = gsap.matchMedia();
       mm.add({ wide: WIDE, tablet: TABLET, tall: TALL, fits: FITS }, (ctx) => {
         const { wide, tablet, tall, fits } = ctx.conditions as Record<"wide" | "tablet" | "tall" | "fits", boolean>;
+        // the progress line of this layout (vertical beside the years / horizontal under them); it renders
+        // after the state below settles, so it is looked up on use and its setter cached
+        let bar: Element | null = null;
+        let setBar: ((v: number) => void) | null = null;
         setWide(wide);
         setPerView(wide ? (tall ? 4 : 2) : tablet && tall ? 2 : 1);
         setView(0);
@@ -85,8 +89,12 @@ export function Forum() {
           onUpdate: (self) => {
             const i = Math.min(YEARS.length - 1, Math.floor(self.progress * YEARS.length));
             if (i !== lastYear.current) showYear(i);
-            gsap.set("[data-forum-bar]", { scaleY: self.progress });
-            gsap.set("[data-forum-bar-x]", { scaleX: self.progress });
+            const el = root.current?.querySelector(wide ? "[data-forum-bar]" : "[data-forum-bar-x]") ?? null;
+            if (el !== bar) {
+              bar = el;
+              setBar = el ? (gsap.quickSetter(el, wide ? "scaleY" : "scaleX") as (v: number) => void) : null;
+            }
+            setBar?.(self.progress);
           },
         });
         // re-created on a resize: keep the refresh order = page order (see components/providers/smooth-scroll)
@@ -190,7 +198,12 @@ export function Forum() {
                       onClick={() => pickYear(i)}
                       className={cn("flex items-baseline gap-4 py-2 text-left transition-colors duration-500", i === yi ? "text-ivory" : "text-ivory/55 hover:text-ivory")}
                     >
-                      <span className={cn("font-display font-semibold tabular-nums transition-[font-size] duration-500", i === yi ? "text-4xl" : "text-2xl")}>
+                      <span
+                        className={cn(
+                          "origin-bottom-left font-display text-4xl font-semibold tabular-nums transition-transform duration-500",
+                          i !== yi && "scale-[0.667]",
+                        )}
+                      >
                         {yr.year}
                       </span>
                       <span className="font-mono text-[11.5px] uppercase tracking-[0.15em] text-mist">{yr.nominations.length} nominatsiya</span>
@@ -244,10 +257,10 @@ export function Forum() {
                 wide ? "-top-32 text-[15vw]" : "-top-10 text-[30vw]",
               )}
             >
-              <AnimatePresence mode="popLayout" initial={false}>
+              <AnimatePresence initial={false}>
                 <motion.span
                   key={y.year}
-                  className="block"
+                  className="absolute right-0 top-0"
                   initial={{ y: "40%", opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: "-40%", opacity: 0 }}
@@ -298,14 +311,14 @@ export function Forum() {
             <AnimatePresence mode="wait">
               <motion.ul
                 key={`${y.year}-${cat}-${view}`}
-                className={cn("relative mt-4 grid gap-3 [perspective:1200px]", perView > 1 && "grid-cols-2")}
+                className={cn("relative mt-4 grid gap-3", perView > 1 && "grid-cols-2")}
                 exit={{ opacity: 0, y: -24, transition: { duration: 0.25 } }}
               >
                 {onScreen.map((n, i) => (
                   <motion.li
                     key={n.title}
-                    initial={{ opacity: 0, y: 40, rotateX: -20 }}
-                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                    initial={{ opacity: 0, y: 32 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.08 * i, duration: 0.7, ease }}
                   >
                     <NominationCard n={n} index={y.nominations.indexOf(n)} compact />
@@ -332,22 +345,28 @@ export function Forum() {
         </div>
       </div>
 
-      {/* every first-place / winning company, as a marquee */}
-      <div className="relative overflow-hidden border-y border-ivory/10 py-8">
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-ink-2 to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-ink-2 to-transparent" />
-        <div className="marquee-track flex w-max items-center gap-14 pr-14" style={{ "--marquee-speed": "90s" } as React.CSSProperties}>
-          {[...CHAMPIONS, ...CHAMPIONS].map((b, i) => (
-            <span
-              key={i}
-              aria-hidden={i >= CHAMPIONS.length}
-              className="whitespace-nowrap font-display text-2xl font-semibold uppercase tracking-tight text-ivory/60 transition-colors duration-300 hover:text-gold md:text-3xl"
-            >
-              {b}
-            </span>
-          ))}
-        </div>
-      </div>
+      <Champions />
     </section>
   );
 }
+
+/** Every first-place / winning company, as a marquee — static, so it is not re-rendered with each year step. */
+const Champions = memo(function Champions() {
+  return (
+    <div className="relative overflow-hidden border-y border-ivory/10 py-8">
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-ink-2 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-ink-2 to-transparent" />
+      <div className="marquee-track flex w-max items-center gap-14 pr-14" style={{ "--marquee-speed": "90s" } as React.CSSProperties}>
+        {[...CHAMPIONS, ...CHAMPIONS].map((b, i) => (
+          <span
+            key={i}
+            aria-hidden={i >= CHAMPIONS.length}
+            className="whitespace-nowrap font-display text-2xl font-semibold uppercase tracking-tight text-ivory/60 transition-colors duration-300 hover:text-gold md:text-3xl"
+          >
+            {b}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+});
