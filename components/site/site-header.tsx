@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { ArrowUpRight, BookOpen, ChevronDown, LayoutDashboard, LogIn, Phone, Search } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Magnetic } from "@/components/magnetic";
@@ -124,7 +124,7 @@ export function SiteHeader({ phone, catalog, waitForIntro = false }: { phone?: s
       <Suspense fallback={null}>
         <PathWatcher onChange={onPath} />
       </Suspense>
-      <motion.header
+      <m.header
         initial={{ y: -100, opacity: 0 }}
         animate={ready ? { y: hidden && open === null && !mobile ? -120 : 0, opacity: 1 } : { y: -120, opacity: 0 }}
         transition={{ duration: 0.8, ease }}
@@ -156,13 +156,13 @@ export function SiteHeader({ phone, catalog, waitForIntro = false }: { phone?: s
                 >
                   {/* the section you are in: a soft pill + a bar under the label, sliding along when you move on */}
                   {active?.group === i && (
-                    <motion.span
+                    <m.span
                       layoutId="nav-active"
                       className="absolute inset-0 rounded-full bg-turq/12"
                       transition={{ type: "spring", stiffness: 380, damping: 32 }}
                     >
                       <span className="absolute inset-x-4 -bottom-1 h-0.5 rounded-full bg-turq" />
-                    </motion.span>
+                    </m.span>
                   )}
                   <span className="relative">{group.label}</span>
                   <ChevronDown className={cn("relative size-4 transition-transform duration-500", open === i && "rotate-180")} />
@@ -230,7 +230,7 @@ export function SiteHeader({ phone, catalog, waitForIntro = false }: { phone?: s
           {/* mega menu */}
           <AnimatePresence>
             {open !== null && (
-              <motion.div
+              <m.div
                 key="mega"
                 onMouseEnter={() => enter(open)}
                 initial={{ opacity: 0, y: -12, clipPath: "inset(0 0 100% 0 round 24px)" }}
@@ -240,7 +240,7 @@ export function SiteHeader({ phone, catalog, waitForIntro = false }: { phone?: s
                 className="panel absolute inset-x-0 top-[calc(100%+10px)] hidden overflow-hidden rounded-3xl p-6 xl:block"
               >
                 <AnimatePresence mode="wait">
-                  <motion.div
+                  <m.div
                     key={open}
                     initial={{ opacity: 0, x: 16 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -264,7 +264,7 @@ export function SiteHeader({ phone, catalog, waitForIntro = false }: { phone?: s
                       {SITE_NAV[open].children.map(({ label, href, desc, icon: Icon }, j) => {
                         const here = active?.group === open && active.href === href;
                         return (
-                          <motion.li
+                          <m.li
                             key={href + label}
                             initial={{ opacity: 0, y: 14 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -297,17 +297,17 @@ export function SiteHeader({ phone, catalog, waitForIntro = false }: { phone?: s
                                 )}
                               </span>
                             </Link>
-                          </motion.li>
+                          </m.li>
                         );
                       })}
                     </ul>
-                  </motion.div>
+                  </m.div>
                 </AnimatePresence>
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
         </div>
-      </motion.header>
+      </m.header>
 
       {/* mobile menu */}
       <AnimatePresence>
@@ -385,7 +385,7 @@ function MobileMenu({
   const [picked, setPicked] = useState<number | null | undefined>(undefined);
   const expanded = picked === undefined ? (active?.group ?? 0) : picked;
   return (
-    <motion.div
+    <m.div
       className="fixed inset-0 z-40 overflow-y-auto bg-ink px-5 pb-10 pt-24 xl:hidden"
       data-lenis-prevent
       initial={{ clipPath: "circle(0% at 95% 4%)" }}
@@ -400,7 +400,7 @@ function MobileMenu({
       >
         <Search className="size-5 text-turq" /> Saytdan qidirish…
       </button>
-      <motion.a
+      <m.a
         href={catalog}
         target="_blank"
         rel="noreferrer"
@@ -417,10 +417,10 @@ function MobileMenu({
           <span className="block text-[15px] text-ivory/75">Elektron katalog · 406 korxona</span>
         </span>
         <ArrowUpRight className="size-6 shrink-0 text-gold" />
-      </motion.a>
+      </m.a>
       <nav className="flex flex-col divide-y divide-ivory/10 border-y border-ivory/10">
         {SITE_NAV.map((group, i) => (
-          <motion.div
+          <m.div
             key={group.label}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -443,7 +443,7 @@ function MobileMenu({
             </button>
             <AnimatePresence initial={false}>
               {expanded === i && (
-                <motion.ul
+                <m.ul
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -470,10 +470,10 @@ function MobileMenu({
                     );
                   })}
                   <li className="h-3" />
-                </motion.ul>
+                </m.ul>
               )}
             </AnimatePresence>
-          </motion.div>
+          </m.div>
         ))}
       </nav>
       <div className="mt-8 flex flex-col gap-3">
@@ -498,6 +498,6 @@ function MobileMenu({
           </a>
         )}
       </div>
-    </motion.div>
+    </m.div>
   );
 }

@@ -3,15 +3,16 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
+import { useSectionSetup } from "@/lib/section-setup";
 import { globeAllowed, globeTooSlow } from "@/lib/perf";
 import { introStore } from "@/lib/store";
 import { CITIES, SAMARKAND, distanceKm, globeMaps } from "@/lib/silk-road";
 import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
-const loadGlobe = () => import("@/components/three/globe-scene");
-const GlobeScene = dynamic(loadGlobe, { ssr: false, loading: () => null });
+const loadGlobe = () => import("@/components/three/globe-view");
+const GlobeView = dynamic(loadGlobe, { ssr: false, loading: () => null });
 /** a moment counts as calm when nobody has scrolled for this long (a reading pause, not a brief stop mid-scroll) */
 const CALM_MS = 1200;
 
@@ -25,16 +26,16 @@ export function SilkRoad() {
   const progress = useRef(0);
   const [active, setActive] = useState(false);
   // The picture of the globe is there at once. The live WebGL globe (three.js + NASA textures) wherever
-  // globeAllowed() says the device can carry it — computers outside light mode, and phones (smaller maps)
-  // unless they save data or sit on a slow link: prepared in calm moments after the intro (download +
-  // start-up, then the GPU upload on mount), so none of that lands in the middle of someone's scroll; it
-  // fades in over the picture once its first frame is drawn and only draws continuously while on screen.
-  // If it then can't keep a smooth frame rate, it steps back to the picture for the rest of the visit.
+  // globeAllowed() says the device can carry it — every device that can draw it in a Web Worker (off the
+  // page's thread), elsewhere outside light mode; never on a data saver or a slow link. It is started in calm
+  // moments after the intro, fades in over the picture once its first frame is drawn and only draws
+  // continuously while on screen. If it can't keep a smooth frame rate, it steps back to the picture.
   const [seen, setSeen] = useState(false);
   const [ready, setReady] = useState(false);
   const theme = useTheme();
   const tooSlow = useCallback(() => {
     globeTooSlow();
+    root.current?.setAttribute("data-globe", "slow");
     setReady(false);
     setSeen(false);
   }, []);
@@ -106,7 +107,8 @@ export function SilkRoad() {
     };
   }, []);
 
-  useGSAP(
+  useSectionSetup(
+    root,
     () => {
       gsap.to(progress, {
         current: 1,
@@ -138,11 +140,10 @@ export function SilkRoad() {
         });
       });
     },
-    { scope: root },
   );
 
   return (
-    <section ref={root} id="ipak-yoli" className="relative overflow-hidden bg-ink px-5 py-20 md:px-10 md:py-40">
+    <section ref={root} id="ipak-yoli" data-cv data-globe="poster" className="relative overflow-hidden bg-ink px-5 py-20 md:px-10 md:py-40">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_70%_40%,rgb(59_91_255/0.18),transparent_60%)]" />
       <div className="relative mx-auto grid max-w-[1600px] items-center gap-10 lg:grid-cols-12">
         <div className="order-2 lg:order-1 lg:col-span-5">
@@ -192,7 +193,16 @@ export function SilkRoad() {
           </div>
           {seen ? (
             <div className={cn("absolute inset-0 opacity-0 transition-opacity duration-700", ready && "opacity-100")}>
-              <GlobeScene active={active} progress={progress} theme={theme} onReady={() => setReady(true)} onSlow={tooSlow} />
+              <GlobeView
+                active={active}
+                progress={progress}
+                theme={theme}
+                onReady={() => {
+                  root.current?.setAttribute("data-globe", "3d");
+                  setReady(true);
+                }}
+                onSlow={tooSlow}
+              />
             </div>
           ) : null}
           <div className="glass pointer-events-none absolute bottom-[12%] left-[6%] rounded-2xl px-4 py-3 font-mono text-[12px] uppercase tracking-[0.15em] text-ivory">

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { ArrowUpRight, CheckCircle2, Loader2, Send, UserRoundCheck } from "lucide-react";
 import { apiFetch, ApiError, fieldError } from "@/lib/api/client";
 import { useSession, type SessionUser } from "@/lib/session";
@@ -85,7 +85,7 @@ export function PublicForm({
     <div className={cn("glass relative overflow-hidden rounded-[2rem] p-6 md:p-10", className)}>
       <AnimatePresence mode="wait">
         {state === "done" ? (
-          <motion.div
+          <m.div
             key="done"
             initial={{ opacity: 0, scale: 0.94 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -94,9 +94,9 @@ export function PublicForm({
             className="flex min-h-[380px] flex-col items-center justify-center text-center"
             role="status"
           >
-            <motion.div initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 200, damping: 14 }}>
+            <m.div initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 200, damping: 14 }}>
               <CheckCircle2 className="size-20 text-turq" />
-            </motion.div>
+            </m.div>
             <h3 className="mt-6 font-display text-3xl font-semibold">{successTitle}</h3>
             <p className="mt-3 max-w-md text-lg text-ivory/85">{successText}</p>
             <button
@@ -106,10 +106,10 @@ export function PublicForm({
             >
               Yana yuborish
             </button>
-          </motion.div>
+          </m.div>
         ) : (
           // keyed by the visitor so the uncontrolled inputs pick up the prefill once the session loads
-          <motion.form key={`form-${user?.id ?? "guest"}`} onSubmit={submit} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} noValidate={false}>
+          <m.form key={`form-${user?.id ?? "guest"}`} onSubmit={submit} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} noValidate={false}>
             {user ? (
               <p className="mb-7 flex items-start gap-3 rounded-2xl border border-turq/30 bg-turq/10 px-5 py-4 text-base text-ivory/90">
                 <UserRoundCheck className="mt-0.5 size-5 shrink-0 text-turq" />
@@ -210,7 +210,7 @@ export function PublicForm({
                 </span>
               </button>
             </div>
-          </motion.form>
+          </m.form>
         )}
       </AnimatePresence>
     </div>

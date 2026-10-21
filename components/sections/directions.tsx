@@ -2,7 +2,8 @@
 
 import { useRef } from "react";
 import { Award, Handshake, HeartHandshake, Lightbulb, Sprout, ArrowUpRight } from "lucide-react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
+import { useSectionSetup } from "@/lib/section-setup";
 import { followPointer, leavePointer, spotlightAt } from "@/lib/pointer";
 import { useCoverflow, SwipeHint } from "@/components/coverflow";
 
@@ -73,7 +74,8 @@ export function Directions() {
   const rail = useRef<HTMLDivElement>(null);
   useCoverflow(rail, "(max-width: 1023px)");
 
-  useGSAP(
+  useSectionSetup(
+    root,
     () => {
       const mm = gsap.matchMedia();
 
@@ -146,7 +148,6 @@ export function Directions() {
 
       return () => mm.revert();
     },
-    { scope: root },
   );
 
   // mouse-only tilt + spotlight on the pinned desktop row (touch would fight the carousel swipe)

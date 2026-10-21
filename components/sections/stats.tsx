@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
+import { useSectionSetup } from "@/lib/section-setup";
 
 const STATS = [
   { value: 30, suffix: "", label: "Kengashning faol a’zolari", ratio: 0.3 },
@@ -17,7 +18,8 @@ const FMT = new Intl.NumberFormat("ru-RU");
 export function Stats() {
   const root = useRef<HTMLElement>(null);
 
-  useGSAP(
+  useSectionSetup(
+    root,
     () => {
       gsap.utils.toArray<HTMLElement>("[data-stat]").forEach((el) => {
         const num = el.querySelector<HTMLElement>("[data-num]")!;
@@ -42,7 +44,6 @@ export function Stats() {
           .from(el.querySelectorAll("[data-stat-fade]"), { y: 20, opacity: 0, duration: 1, stagger: 0.1, ease: "expo.out" }, 0.1);
       });
     },
-    { scope: root },
   );
 
   return (

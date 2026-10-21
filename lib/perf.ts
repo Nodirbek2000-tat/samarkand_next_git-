@@ -9,13 +9,24 @@
 const ATTR = "data-lite";
 /** sessionStorage: the frame probe found this machine slow — later pages start light at once */
 const LITE_KEY = "ys-lite";
+/** sessionStorage: `?lite=1` / `?lite=0` in the address pins the mode for this tab (testing and support) */
+const FORCE_KEY = "ys-lite-force";
 
 /**
  * Runs in <head> before first paint: what the browser already knows — data saver, 2G/3G,
  * ≤4 GB memory, ≤4 CPU threads, or an earlier probe verdict in this tab. Slow machines that pass this
- * are caught by the frame probe (Preloader).
+ * are caught by the frame probe (Preloader). `?lite=1` / `?lite=0` pins either mode for the tab.
  */
-export const LITE_SCRIPT = `(function(){try{var n=navigator,c=n.connection||{},m=n.deviceMemory,h=n.hardwareConcurrency;if(sessionStorage.getItem("${LITE_KEY}")||c.saveData||/2g|3g/.test(c.effectiveType||"")||(m&&m<=4)||(h&&h<=4))document.documentElement.setAttribute("${ATTR}","")}catch(e){}})()`;
+export const LITE_SCRIPT = `(function(){try{var s=sessionStorage,q=/[?&]lite=([01])/.exec(location.search);if(q)s.setItem("${FORCE_KEY}",q[1]);var f=s.getItem("${FORCE_KEY}"),n=navigator,c=n.connection||{},m=n.deviceMemory,h=n.hardwareConcurrency;if(f==="1"||(f!=="0"&&(s.getItem("${LITE_KEY}")||c.saveData||/2g|3g/.test(c.effectiveType||"")||(m&&m<=4)||(h&&h<=4))))document.documentElement.setAttribute("${ATTR}","")}catch(e){}})()`;
+
+/** the mode was pinned with `?lite=0` — the probe leaves it alone */
+function forcedFull() {
+  try {
+    return sessionStorage.getItem(FORCE_KEY) === "0";
+  } catch {
+    return false;
+  }
+}
 
 const listeners = new Set<() => void>();
 
@@ -25,7 +36,7 @@ export function isLite() {
 
 /** Switch lite on for the rest of the visit (CSS reacts at once; subscribers adjust what they can). */
 export function enableLite() {
-  if (isLite()) return;
+  if (isLite() || forcedFull()) return;
   document.documentElement.setAttribute(ATTR, "");
   try {
     sessionStorage.setItem(LITE_KEY, "1");
@@ -41,22 +52,30 @@ export function onLite(cb: () => void) {
 /** sessionStorage: the live globe could not keep up on this device — the picture stays for the visit */
 const GLOBE_OFF_KEY = "ys-globe-off";
 
+/** The browser can hand a canvas to a Web Worker and draw there (the globe then never touches the page's thread). */
+export function canDrawOffMainThread() {
+  return (
+    typeof Worker !== "undefined" &&
+    typeof OffscreenCanvas !== "undefined" &&
+    typeof HTMLCanvasElement !== "undefined" &&
+    "transferControlToOffscreen" in HTMLCanvasElement.prototype
+  );
+}
+
 /**
- * May the live 3D globe run here? Computers: whenever the page is not in light mode. Phones: a phone's
- * memory or core count says little about one small WebGL scene, so the Earth turns there too unless a data
- * saver, a 2G/3G link or the preloader's frame probe says otherwise — and the globe watches its own frames
- * and hands back to the picture if the phone can't keep up (`globeTooSlow`).
+ * May the live 3D globe run here? It turns on every device that can draw it off the page's own thread
+ * (a Web Worker — then even a weak machine's scrolling is untouched), and elsewhere wherever the page is not
+ * in light mode. Never on a data saver or a 2G/3G link (the maps are a download), and the globe watches its
+ * own frames: if the device can't keep up it hands back to the picture for the visit (`globeTooSlow`).
  */
 export function globeAllowed() {
   if (typeof window === "undefined" || typeof WebGL2RenderingContext === "undefined") return false;
-  let probedSlow = false;
   try {
     if (sessionStorage.getItem(GLOBE_OFF_KEY)) return false;
-    probedSlow = !!sessionStorage.getItem(LITE_KEY);
   } catch {}
-  if (!window.matchMedia("(max-width: 767px)").matches) return !isLite();
   const c = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
-  return !probedSlow && !c?.saveData && !/2g|3g/.test(c?.effectiveType ?? "");
+  if (c?.saveData || /2g|3g/.test(c?.effectiveType ?? "")) return false;
+  return canDrawOffMainThread() || !isLite();
 }
 
 export function globeTooSlow() {

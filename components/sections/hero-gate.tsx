@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { memo, type CSSProperties } from "react";
 import { GATE_APEX, GATE_FRAME, GATE_HINGE, GATE_LEFT, GATE_MEDALLION, GATE_OPENING, GATE_RIGHT } from "./hero-gate-shape";
 
 /**
@@ -69,8 +69,9 @@ function Door({ mirror = false }: { mirror?: boolean }) {
   );
 }
 
-/** Door + its reflection, light spilling on the facade and the wet plaza, rays and sparks. */
-export function HeroGate() {
+/** Door + its reflection, light spilling on the facade and the wet plaza, rays and sparks. Static: memoised, so
+ * the hero's own updates (intro, theme) don't render it again. */
+export const HeroGate = memo(function HeroGate() {
   return (
     <>
       <div data-gate-spill className="gate-spill" />
@@ -87,4 +88,4 @@ export function HeroGate() {
       </div>
     </>
   );
-}
+});

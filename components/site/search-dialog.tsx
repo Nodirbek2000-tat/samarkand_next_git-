@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { ArrowRight, ArrowUpRight, CornerDownLeft, History, Loader2, Search, X } from "lucide-react";
 import type { SearchResult } from "@/lib/api/types";
 import { cleanQuery, fold, groupByKind, mergeResults, MIN_QUERY, searchPages } from "@/lib/site-search";
@@ -135,14 +135,14 @@ export function SearchDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <motion.div
+    <m.div
       className="fixed inset-0 z-[70] flex items-start justify-center bg-ink/70 px-3 pt-[8vh] backdrop-blur-md md:pt-[12vh]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
     >
-      <motion.div
+      <m.div
         role="dialog"
         aria-modal="true"
         aria-label="Sayt bo‘yicha qidiruv"
@@ -390,7 +390,7 @@ export function SearchDialog({ onClose }: { onClose: () => void }) {
             </Link>
           </div>
         )}
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

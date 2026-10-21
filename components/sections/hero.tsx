@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
-import { gsap, ScrollTrigger, SplitText, useGSAP } from "@/lib/gsap";
+import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { gpuWhileMoving } from "@/lib/gpu-while-moving";
 import { isLite } from "@/lib/perf";
 import { useIntroDone } from "@/lib/store";
@@ -16,6 +16,7 @@ import { HeroGate } from "./hero-gate";
 import { HeroIntroLight, HeroSky } from "./hero-sky";
 import { HeroJourney, HeroJourneySummary } from "./hero-journey";
 import { addJourney } from "./hero-journey-timeline";
+import { flushSetups } from "@/lib/section-setup";
 
 /**
  * Hero: Registan on a mirror-still plaza with a carved double door set into Tilla-Kori's portal.
@@ -26,6 +27,8 @@ import { addJourney } from "./hero-journey-timeline";
  * facade and the wet stone — and the camera dives through into the light.
  * Photo/door geometry per theme lives in CSS variables (.hero-stage in globals.css).
  */
+const TITLE = [..."Yangi"];
+
 export function Hero() {
   const root = useRef<HTMLElement>(null);
   const intro = useIntroDone();
@@ -52,6 +55,7 @@ export function Hero() {
   // scroll-driven gate sequence (rebuilt when the theme swaps the photograph)
   useGSAP(
     () => {
+      const t0 = performance.now();
       const section = root.current;
       const stage = section?.querySelector<HTMLElement>(".hero-stage");
       const css = (name: string) => parseFloat(stage ? getComputedStyle(stage).getPropertyValue(name) : "");
@@ -64,7 +68,6 @@ export function Hero() {
         return Math.min(z, fitW, fitH);
       };
       const random = gsap.utils.random;
-      const lite = isLite();
       const q = gsap.utils.selector(root);
       // how far the portal sits below the viewport's optical centre, so the camera re-centres on
       // the door while it closes in (measured unscaled: the stage box ignores the zoom layer)
@@ -129,27 +132,27 @@ export function Hero() {
         )
         .to("[data-gate-spill]", { opacity: 1, ease: "power2.out", duration: 0.12 }, 0.46)
         .fromTo("[data-gate-pool]", { opacity: 0, scaleY: 0.35 }, { opacity: 1, scaleY: 1, ease: "power2.out", duration: 0.14 }, 0.47);
-      // rays and sparks: not on weak machines (they are hidden there — nothing to compute either)
-      if (!lite)
-        tl.fromTo(
-          "[data-gate-rays]",
-          { opacity: 0, scale: 0.3, rotate: -20 },
-          { opacity: 1, scale: 1.25, rotate: 25, ease: "power2.out", duration: 0.32 },
-          0.47,
-        ).fromTo(
-          "[data-gate-spark]",
-          { opacity: 1, xPercent: -50, yPercent: -50, scale: 0.4 },
-          {
-            opacity: 0,
-            xPercent: () => random(-4600, 4600),
-            yPercent: () => random(-4200, 2400),
-            scale: () => random(0.6, 2.4),
-            ease: "power3.out",
-            duration: 0.26,
-            stagger: 0.004,
-          },
-          0.47,
-        );
+      // rays and sparks — on every device: the rays are one half-size layer drawn once and enlarged on the GPU,
+      // the sparks small gradient dots (no painted shadows); weak machines show fewer of them (globals.css)
+      tl.fromTo(
+        "[data-gate-rays]",
+        { opacity: 0, scale: 0.6, rotate: -20 },
+        { opacity: 1, scale: 2.5, rotate: 25, ease: "power2.out", duration: 0.32 },
+        0.47,
+      ).fromTo(
+        "[data-gate-spark]",
+        { opacity: 1, xPercent: -50, yPercent: -50, scale: 0.4 },
+        {
+          opacity: 0,
+          xPercent: () => random(-3300, 3300),
+          yPercent: () => random(-3000, 1730),
+          scale: () => random(0.6, 2.4),
+          ease: "power3.out",
+          duration: 0.26,
+          stagger: 0.004,
+        },
+        0.47,
+      );
       // 5 — through the gate, into the light
       tl.to("[data-hero-zoom]", { scale: () => Z() * 4.6, ease: "power3.in", duration: 0.26, force3D: false }, 0.58)
         .to("[data-hero-flash]", { opacity: 1, ease: "power2.in", duration: 0.12 }, 0.7)
@@ -157,7 +160,9 @@ export function Hero() {
 
       // 6 — out of the light: arch after arch through Khoja Daniyar, the airport and the Silk Road
       // to the Imam al-Bukhari complex, which shatters into mosaic — then the page takes over
+      const tj = performance.now();
       const journey = section ? addJourney(tl, section, 0.84) : null;
+      performance.measure("setup hero/journey", { start: tj, end: performance.now() });
 
       // The pin is created once, after the timeline is complete, so its length is right from the first
       // layout (gate pace: 2.6 screens per timeline unit). It refreshes before every other trigger:
@@ -182,7 +187,6 @@ export function Hero() {
         end: () => `+=${Math.round(tl.duration() * (window.innerWidth < 768 ? 150 : 260))}%`,
         pin: true,
         scrub: 1,
-        invalidateOnRefresh: true,
         refreshPriority: 1,
         animation: tl,
         onUpdate: (self) => {
@@ -191,7 +195,23 @@ export function Hero() {
           section?.toggleAttribute("data-hero-past", past);
         },
       });
-      return stopGpu;
+      // The camera's zoom and lift depend on the screen and on the theme's door geometry, so the timeline is
+      // recomputed when either changes — but not on every page measurement: GSAP re-measures the whole page
+      // each time a pinned section below is set up, and recomputing this long timeline each time was a freeze.
+      const screenKey = () => `${window.innerWidth}x${window.innerHeight}|${document.documentElement.dataset.theme ?? ""}`;
+      let measured = screenKey();
+      const remeasure = () => {
+        const now = screenKey();
+        if (now === measured) return;
+        measured = now;
+        tl.invalidate();
+      };
+      ScrollTrigger.addEventListener("refreshInit", remeasure);
+      performance.measure("setup hero", { start: t0, end: performance.now() });
+      return () => {
+        ScrollTrigger.removeEventListener("refreshInit", remeasure);
+        stopGpu();
+      };
     },
     { scope: root },
   );
@@ -231,35 +251,44 @@ export function Hero() {
       // day — the morning haze burns off and the sun sweeps across the facades
       if (reduce) {
         gsap.set(["[data-hero-lights]", "[data-hero-haze]"], { autoAlpha: 0 });
-      } else if (lite) {
-        gsap.to(["[data-hero-lights]", "[data-hero-haze]"], { autoAlpha: 0, duration: 1.4, ease: "power2.inOut" });
       } else {
-        gsap
-          .timeline()
-          .to("[data-hero-lights]", {
-            keyframes: [
-              { opacity: 0.6, duration: 0.06 },
-              { opacity: 1, duration: 0.08 },
-              { opacity: 0.72, duration: 0.05 },
-              { opacity: 1, duration: 0.1 },
-            ],
-          })
-          .fromTo("[data-hero-lights]", { "--r": "0%" }, { "--r": "180%", duration: 2.4, ease: "power2.in" }, 0.15)
-          .set("[data-hero-lights]", { autoAlpha: 0 })
-          .to("[data-hero-haze]", { opacity: 0, duration: 2.2, ease: "power2.inOut" }, 0)
+        const lights = gsap.timeline();
+        if (lite) {
+          // weak machines: the night lights simply fade (the growing light circle repaints the whole photo)
+          lights.to(["[data-hero-lights]", "[data-hero-haze]"], { autoAlpha: 0, duration: 1.4, ease: "power2.inOut" }, 0);
+        } else {
+          lights
+            .to(
+              "[data-hero-lights]",
+              {
+                keyframes: [
+                  { opacity: 0.6, duration: 0.06 },
+                  { opacity: 1, duration: 0.08 },
+                  { opacity: 0.72, duration: 0.05 },
+                  { opacity: 1, duration: 0.1 },
+                ],
+              },
+              0,
+            )
+            .fromTo("[data-hero-lights]", { "--r": "0%" }, { "--r": "180%", duration: 2.4, ease: "power2.in" }, 0.15)
+            .set("[data-hero-lights]", { autoAlpha: 0 }, 2.55)
+            .to("[data-hero-haze]", { opacity: 0, duration: 2.2, ease: "power2.inOut" }, 0);
+        }
+        // the sun sweep (day) and the gate's answer — a burst of light and shock rings — on every device:
+        // transform and opacity only
+        lights
           .fromTo("[data-hero-sweep]", { xPercent: -110, opacity: 1 }, { xPercent: 320, duration: 2.6, ease: "power2.inOut" }, 0.35)
-          .set("[data-hero-sweep]", { opacity: 0 })
-          // the gate answers: a burst of light and a shock ring roll out from the carved door
+          .set("[data-hero-sweep]", { opacity: 0 }, 2.95)
           .fromTo("[data-hero-flare]", { autoAlpha: 0, scale: 0.2 }, { autoAlpha: 1, scale: 1, duration: 0.5, ease: "power3.out" }, 1.15)
           .to("[data-hero-flare]", { autoAlpha: 0, scale: 1.6, duration: 1.1, ease: "power2.in" }, 1.65)
           .fromTo("[data-hero-ring]", { autoAlpha: 1, scale: 0.15 }, { autoAlpha: 0, scale: 3.4, duration: 1.6, ease: "expo.out", stagger: 0.18 }, 1.2);
       }
 
-      const split = SplitText.create("[data-hero-title]", { type: "chars,lines", mask: "lines" });
       const tl = gsap.timeline({ delay: 0.3 });
       tl.set("[data-reveal]", { autoAlpha: 1 })
-        // YANGI: the letters flip up out of the ground, from the middle outwards
-        .from(split.chars, {
+        // YANGI: the letters flip up out of the ground, from the middle outwards (already split in the markup:
+        // splitting at this moment measured the whole page while the curtain was lifting)
+        .from("[data-hero-char]", {
           yPercent: 130,
           rotationX: -95,
           transformOrigin: "50% 100%",
@@ -327,8 +356,15 @@ export function Hero() {
         <div data-hero-copy className="text-center">
           <div data-reveal className="invisible">
             <h1 className="font-display font-bold uppercase leading-[0.86] tracking-[-0.04em] [text-shadow:0_8px_40px_rgb(3_5_11/0.75)]">
-              <span data-hero-title className="block whitespace-nowrap text-[min(17vw,11svh)] md:text-[min(8.4vw,14.5svh)]">
-                Yangi
+              <span data-hero-title aria-label="Yangi" className="block whitespace-nowrap text-[min(17vw,11svh)] md:text-[min(8.4vw,14.5svh)]">
+                {/* one line, clipped below so the letters rise out of the ground (not at the sides) */}
+                <span aria-hidden className="block [overflow-clip-margin:0.12em] [overflow:visible_clip]">
+                  {TITLE.map((c, i) => (
+                    <span key={i} data-hero-char className="inline-block">
+                      {c}
+                    </span>
+                  ))}
+                </span>
               </span>
               {/* gradient line animates as one block: background-clip:text breaks on split chars */}
               <span className="block overflow-hidden pb-[0.06em]">
@@ -351,7 +387,7 @@ export function Hero() {
                 </p>
                 <div data-hero-fade className="flex flex-wrap items-center gap-3 md:shrink-0">
                   <Magnetic>
-                    <ButtonLink href="#kengash" size="lg" onClick={(e) => (e.preventDefault(), lenis?.scrollTo("#kengash", { duration: 1.8 }))}>
+                    <ButtonLink href="#kengash" size="lg" onClick={(e) => (e.preventDefault(), flushSetups(), lenis?.scrollTo("#kengash", { duration: 1.8 }))}>
                       <Roll>Kengash haqida</Roll> <ArrowUpRight />
                     </ButtonLink>
                   </Magnetic>
@@ -360,7 +396,7 @@ export function Hero() {
                       href="#yonalishlar"
                       size="lg"
                       variant="ghost"
-                      onClick={(e) => (e.preventDefault(), lenis?.scrollTo("#yonalishlar", { duration: 1.8 }))}
+                      onClick={(e) => (e.preventDefault(), flushSetups(), lenis?.scrollTo("#yonalishlar", { duration: 1.8 }))}
                     >
                       <Roll>Yo‘nalishlar</Roll>
                     </ButtonLink>

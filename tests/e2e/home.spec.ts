@@ -77,6 +77,10 @@ test("forum: barcha nominatsiyalar 2023 → 2024 → 2025 tartibida chiqadi", as
   await openHome(page);
   const forum = page.locator("#forum");
   await forum.scrollIntoViewIfNeeded();
+  // sections are set up from a queue (lib/section-setup): the pin exists once the forum has come near, and
+  // after such a jump the page is measured once more when the scrolling stops
+  await expect(forum.locator(".pin-spacer")).toHaveCount(1);
+  await page.waitForTimeout(1500);
   // the section is pinned, one scroll step per forum; the rest of a forum is behind ‹ ›
   const seen = new Set<string>();
   const order: string[] = [];

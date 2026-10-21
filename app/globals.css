@@ -381,10 +381,13 @@ html[data-lite] .marquee-skew {
   height: calc(var(--dh) * 260%);
   background: radial-gradient(ellipse 50% 50% at 50% 50%, rgb(255 236 190 / 0.95) 0%, rgb(255 196 110 / 0.45) 35%, transparent 72%);
 }
+/* drawn at half size and enlarged ×2 by the timeline: a quarter of the pixels to paint, and the soft rays
+   look the same; one GPU layer for the whole burst */
 .gate-rays {
   left: calc((var(--dl) + var(--dw) / 2) * 100%);
   top: calc((var(--dt) + var(--dh) * 0.57) * 100%);
-  width: calc(var(--dh) / var(--ar) * 720%);
+  width: calc(var(--dh) / var(--ar) * 360%);
+  will-change: transform, opacity;
   aspect-ratio: 1;
   background:
     repeating-conic-gradient(from 0deg, rgb(255 206 120 / 0.4) 0deg 3deg, rgb(255 206 120 / 0) 3deg 11deg),
@@ -404,12 +407,12 @@ html[data-lite] .marquee-skew {
   position: absolute;
   left: var(--mx);
   top: var(--my);
-  width: 2.6%;
+  width: 3.6%;
   aspect-ratio: 1;
   border-radius: 999px;
   opacity: 0;
-  background: #fff1c4;
-  box-shadow: 0 0 6px 2px rgb(255 206 120 / 0.95);
+  /* a glowing dot as a gradient (a blurred box-shadow is repainted on every spark) */
+  background: radial-gradient(circle, #fff6d8 0 28%, rgb(255 214 140 / 0.9) 42%, rgb(255 196 110 / 0.35) 58%, transparent 72%);
 }
 
 /* sky + plaza life (components/sections/hero-sky.tsx) */
@@ -615,7 +618,18 @@ html[data-lite] .tier-foil {
 html[data-lite] .art-spin {
   animation: none;
 }
-html[data-lite] :is(.gate-sparks, .gate-rays, .hero-ring, .j-streaks, .grain) {
+/* sections the browser may skip while far off screen (components/offscreen-pause.tsx sets the size) */
+.cv-skip {
+  content-visibility: auto;
+}
+/* the gate's rays, sparks and rings stay on weak machines too — cheaper: fewer sparks, rings without a glow */
+html[data-lite] .gate-sparks > span:nth-child(n + 13) {
+  display: none;
+}
+html[data-lite] .hero-ring {
+  box-shadow: none;
+}
+html[data-lite] .grain {
   display: none;
 }
 

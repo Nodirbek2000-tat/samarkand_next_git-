@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { motion, useMotionValue, useSpring, AnimatePresence } from "motion/react";
+import { m, useMotionValue, useSpring, AnimatePresence } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
+import { useSectionSetup } from "@/lib/section-setup";
 import { useCoverflow, SwipeHint } from "@/components/coverflow";
 
 const PROJECTS = [
@@ -85,7 +86,8 @@ export function Projects() {
   const sx = useSpring(x, { stiffness: 180, damping: 22, mass: 0.6 });
   const sy = useSpring(y, { stiffness: 180, damping: 22, mass: 0.6 });
 
-  useGSAP(
+  useSectionSetup(
+    root,
     () => {
       const mm = gsap.matchMedia();
       mm.add("(min-width: 768px)", () => {
@@ -119,7 +121,6 @@ export function Projects() {
       });
       return () => mm.revert();
     },
-    { scope: root },
   );
 
   return (
@@ -205,13 +206,13 @@ export function Projects() {
       </div>
 
       {/* floating preview that follows the pointer (desktop) */}
-      <motion.div
+      <m.div
         className="pointer-events-none fixed left-0 top-0 z-30 hidden aspect-[4/5] w-[300px] md:block"
         style={{ x: sx, y: sy, translateX: "-50%", translateY: "-50%" }}
       >
         <AnimatePresence mode="popLayout">
           {active !== null && (
-            <motion.div
+            <m.div
               key={active}
               className="absolute inset-0 overflow-hidden rounded-3xl shadow-[0_40px_120px_-20px_rgb(0_0_0/0.9)]"
               initial={{ opacity: 0, scale: 0.6, rotate: -8 }}
@@ -220,10 +221,10 @@ export function Projects() {
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
               <Art colors={PROJECTS[active].colors} index={active} />
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </m.div>
     </section>
   );
 }

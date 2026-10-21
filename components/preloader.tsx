@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { AnimatePresence, motion, animate, useMotionValue, useMotionValueEvent } from "motion/react";
+import { AnimatePresence, m, animate, useMotionValue, useMotionValueEvent } from "motion/react";
 import { introStore } from "@/lib/store";
 import { enableLite, isLite, probeFrames } from "@/lib/perf";
 import { useLenis } from "@/components/providers/smooth-scroll";
@@ -96,7 +96,7 @@ export function Preloader() {
   return (
     <AnimatePresence>
       {!done && (
-        <motion.div
+        <m.div
           key="preloader"
           ref={root}
           className="fixed inset-0 z-[90] flex flex-col justify-between overflow-hidden bg-ink p-6 md:p-10"
@@ -108,14 +108,14 @@ export function Preloader() {
           <div className="pointer-events-none absolute left-1/2 top-1/2 size-[90vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--color-turq)_12%,transparent),transparent_65%)]" />
 
           <div className="relative flex items-start justify-between font-mono text-[11.5px] uppercase tracking-[0.2em] text-mist">
-            <motion.span initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8, ease }}>
+            <m.span initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8, ease }}>
               Yangi Samarqand
-            </motion.span>
+            </m.span>
           </div>
 
           <div className="relative flex flex-col items-center gap-6 md:gap-8">
             {/* girih rosette: each of the 12 petals lights up as loading passes it */}
-            <motion.div
+            <m.div
               className="relative grid size-40 place-items-center md:size-48"
               initial={{ scale: 0.4, opacity: 0, rotate: -90 }}
               animate={{ scale: 1, opacity: 1, rotate: 0 }}
@@ -134,10 +134,10 @@ export function Preloader() {
                 ))}
               </svg>
               <StarMark className="size-14 md:size-16" />
-            </motion.div>
+            </m.div>
             <div className="flex overflow-hidden font-display text-[10.5vw] font-bold leading-[0.9] tracking-tight md:text-[8vw]">
               {WORD.map((ch, i) => (
-                <motion.span
+                <m.span
                   key={i}
                   className="inline-block"
                   initial={{ y: "110%", rotate: 8 }}
@@ -145,17 +145,17 @@ export function Preloader() {
                   transition={{ delay: 0.1 + i * 0.04, duration: 0.8, ease }}
                 >
                   {ch}
-                </motion.span>
+                </m.span>
               ))}
             </div>
-            <motion.p
+            <m.p
               className="font-mono text-[11.5px] uppercase tracking-[0.25em] text-turq"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.8 }}
             >
               Ming yillik meros · Yangi davr
-            </motion.p>
+            </m.p>
           </div>
 
           <div className="relative flex items-end justify-between gap-6">
@@ -180,7 +180,7 @@ export function Preloader() {
               ))}
             </span>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

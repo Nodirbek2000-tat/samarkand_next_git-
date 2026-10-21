@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { Moon, Sun } from "lucide-react";
 import { setTheme, useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,7 @@ export function ThemeToggle({ className, withLabel = false }: { className?: stri
     >
       <span className="relative grid size-5 place-items-center">
         <AnimatePresence mode="popLayout" initial={false}>
-          <motion.span
+          <m.span
             key={theme}
             initial={{ y: 18, rotate: -90, opacity: 0 }}
             animate={{ y: 0, rotate: 0, opacity: 1 }}
@@ -33,7 +33,7 @@ export function ThemeToggle({ className, withLabel = false }: { className?: stri
             className="absolute"
           >
             {theme === "dark" ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
-          </motion.span>
+          </m.span>
         </AnimatePresence>
       </span>
       {withLabel && <span className="pr-1 text-sm font-medium">{label}</span>}

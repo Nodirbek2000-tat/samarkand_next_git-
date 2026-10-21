@@ -2,7 +2,8 @@
 
 import { useRef } from "react";
 import { Network, LineChart, Landmark, ShieldCheck } from "lucide-react";
-import { gsap, SplitText, useGSAP } from "@/lib/gsap";
+import { gsap, SplitText } from "@/lib/gsap";
+import { useSectionSetup } from "@/lib/section-setup";
 import { heavyEffects } from "@/lib/heavy-effects";
 import { followPointer, spotlightAt } from "@/lib/pointer";
 
@@ -33,7 +34,8 @@ const CARDS = [
 export function Manifesto() {
   const root = useRef<HTMLElement>(null);
 
-  useGSAP(
+  useSectionSetup(
+    root,
     () => {
       gsap.from("[data-card]", {
         y: 80,
@@ -71,13 +73,12 @@ export function Manifesto() {
         });
       }, root.current);
     },
-    { scope: root },
   );
 
   const onMove = (e: React.PointerEvent<HTMLElement>) => followPointer(e, spotlightAt);
 
   return (
-    <section ref={root} id="kengash" className="relative overflow-hidden bg-ink px-5 py-20 md:px-10 md:py-44">
+    <section ref={root} id="kengash" data-cv className="relative overflow-hidden bg-ink px-5 py-20 md:px-10 md:py-44">
       <svg
         data-ring
         viewBox="0 0 400 400"

@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { motion, useAnimationControls } from "motion/react";
+import { m, useAnimationControls } from "motion/react";
 import QRCode from "react-qr-code";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
 import { apiFetch, ApiError } from "@/lib/api/client";
@@ -62,7 +62,7 @@ export function TelegramLogin({ config }: { config: Config | null }) {
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
@@ -106,7 +106,7 @@ export function TelegramLogin({ config }: { config: Config | null }) {
           <CheckCircle2 className="size-7 text-turq" /> Xush kelibsiz!
         </p>
       ) : (
-        <motion.form
+        <m.form
           animate={shake}
           onSubmit={(e) => {
             e.preventDefault();
@@ -143,8 +143,8 @@ export function TelegramLogin({ config }: { config: Config | null }) {
           >
             {state === "busy" && <Loader2 className="size-5 animate-spin" />} Kirish
           </button>
-        </motion.form>
+        </m.form>
       )}
-    </motion.div>
+    </m.div>
   );
 }

@@ -2,7 +2,8 @@
 
 import { useRef } from "react";
 import { Check, Crown } from "lucide-react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
+import { flushSetups, useSectionSetup } from "@/lib/section-setup";
 import { followPointer, leavePointer } from "@/lib/pointer";
 import { useLenis } from "@/components/providers/smooth-scroll";
 import { useCoverflow, SwipeHint } from "@/components/coverflow";
@@ -29,7 +30,8 @@ export function Membership() {
   const lenis = useLenis();
   useCoverflow(tiers);
 
-  useGSAP(
+  useSectionSetup(
+    root,
     () => {
       const mm = gsap.matchMedia();
       mm.add("(min-width: 768px)", () => {
@@ -65,7 +67,6 @@ export function Membership() {
       });
       return () => mm.revert();
     },
-    { scope: root },
   );
 
   // mouse-only foil + tilt (touch would fight the phone carousel swipe); the foil's vars live on the foil
@@ -84,7 +85,7 @@ export function Membership() {
   const leave = (e: React.PointerEvent<HTMLElement>) => window.innerWidth >= 768 && leavePointer(e);
 
   return (
-    <section ref={root} id="azolik" className="relative overflow-hidden bg-ink px-5 py-20 md:px-10 md:py-40">
+    <section ref={root} id="azolik" data-cv className="relative overflow-hidden bg-ink px-5 py-20 md:px-10 md:py-40">
       <div className="pointer-events-none absolute -right-60 -top-60 size-[1000px] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--color-gold)_12%,transparent),transparent_62%)]" />
       <div className="relative mx-auto max-w-[1600px]">
         <div className="mb-6 flex flex-col justify-between gap-6 md:mb-16 md:flex-row md:items-end md:gap-8">
@@ -165,7 +166,7 @@ export function Membership() {
             <button
               type="button"
               data-cursor="hover"
-              onClick={() => lenis?.scrollTo("#aloqa", { duration: 1.8 })}
+              onClick={() => (flushSetups(), lenis?.scrollTo("#aloqa", { duration: 1.8 }))}
               className="mt-8 inline-flex h-12 items-center rounded-full bg-ivory px-6 font-mono text-[12.5px] uppercase tracking-[0.18em] text-ink transition-colors hover:bg-gold"
             >
               <Roll>Ariza yuborish</Roll>

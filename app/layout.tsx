@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Unbounded, Manrope, JetBrains_Mono } from "next/font/google";
 import { NavProgress } from "@/components/nav-progress";
+import { Vitals } from "@/components/vitals";
 import { THEME_SCRIPT } from "@/lib/theme-script";
 import { LITE_SCRIPT } from "@/lib/perf";
 import "./globals.css";
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       {/* browser extensions (e.g. ColorZilla) inject attributes into <body> */}
       <body suppressHydrationWarning>
         <NavProgress />
+        <Vitals />
         {children}
       </body>
     </html>

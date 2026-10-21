@@ -417,4 +417,7 @@ function imamBukhari(): Part[] {
   return parts;
 }
 
-export const SCENES: Part[][] = [registon(), shohiZinda(), modernGate(), eternalCity(), imamBukhari()];
+const BUILDERS = [registon, shohiZinda, modernGate, eternalCity, imamBukhari];
+const built: Part[][] = [];
+/** One scene's parts, built the first time a card asks for it (not all five while the page loads). */
+export const scene = (i: number) => (built[i] ??= BUILDERS[i]());

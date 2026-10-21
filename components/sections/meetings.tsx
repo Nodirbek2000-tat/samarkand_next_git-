@@ -2,7 +2,8 @@
 
 import { useRef } from "react";
 import { Building2, Factory, Users, ClipboardCheck } from "lucide-react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
+import { useSectionSetup } from "@/lib/section-setup";
 import { heavyEffects } from "@/lib/heavy-effects";
 
 const STEPS = [
@@ -31,7 +32,8 @@ const STEPS = [
 export function Meetings() {
   const root = useRef<HTMLElement>(null);
 
-  useGSAP(
+  useSectionSetup(
+    root,
     () => {
       gsap.utils.toArray<HTMLElement>("[data-step]").forEach((step) => {
         const tl = gsap.timeline({
@@ -56,7 +58,6 @@ export function Meetings() {
         });
       }, root.current);
     },
-    { scope: root },
   );
 
   return (

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
+import { MotionProvider } from "@/components/motion-provider";
 
 export const metadata: Metadata = {
   title: "Boshqaruv paneli — Yangi Samarqand",
@@ -9,7 +10,8 @@ export const metadata: Metadata = {
 export default function AdminRootLayout({ children }: LayoutProps<"/admin">) {
   return (
     <>
-      {children}
+      {/* shared site pieces (theme switch, Telegram sign-in) use the light motion elements too */}
+      <MotionProvider>{children}</MotionProvider>
       <Toaster
         position="top-right"
         richColors

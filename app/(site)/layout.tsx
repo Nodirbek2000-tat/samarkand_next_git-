@@ -1,3 +1,4 @@
+import { MotionProvider } from "@/components/motion-provider";
 import { SmoothScroll } from "@/components/providers/smooth-scroll";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
@@ -8,12 +9,14 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
   const settings = await api.settings();
   return (
     <SmoothScroll>
-      <RouteEffects />
-      <SiteHeader phone={settings?.phone} catalog={settings?.catalog_url} />
-      <main id="main" className="min-h-svh">
-        {children}
-      </main>
-      <SiteFooter settings={settings} />
+      <MotionProvider>
+        <RouteEffects />
+        <SiteHeader phone={settings?.phone} catalog={settings?.catalog_url} />
+        <main id="main" className="min-h-svh">
+          {children}
+        </main>
+        <SiteFooter settings={settings} />
+      </MotionProvider>
     </SmoothScroll>
   );
 }

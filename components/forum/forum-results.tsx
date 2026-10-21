@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { CATEGORIES, CATEGORY_ORDER, type ForumCategory, type Nomination } from "@/lib/forum-data";
 import { CatChip, NominationCard } from "./ui";
 
@@ -28,13 +28,13 @@ export function ForumResults({ nominations }: { nominations: Nomination[] }) {
       </div>
 
       <AnimatePresence mode="wait">
-        <motion.ul
+        <m.ul
           key={cat}
           className="mt-8 grid gap-4 md:mt-10 md:grid-cols-2 xl:grid-cols-3 [perspective:1200px]"
           exit={{ opacity: 0, y: -10, transition: { duration: 0.2 } }}
         >
           {shown.map((n, i) => (
-            <motion.li
+            <m.li
               key={n.official}
               initial={{ opacity: 0, y: 36, rotateX: -14 }}
               whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
@@ -42,9 +42,9 @@ export function ForumResults({ nominations }: { nominations: Nomination[] }) {
               transition={{ delay: 0.05 * (i % 3), duration: 0.7, ease }}
             >
               <NominationCard n={n} index={nominations.indexOf(n)} />
-            </motion.li>
+            </m.li>
           ))}
-        </motion.ul>
+        </m.ul>
       </AnimatePresence>
     </>
   );

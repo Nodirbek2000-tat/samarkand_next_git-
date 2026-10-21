@@ -29,7 +29,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings | null }) {
   const email = settings?.email || "info@yangisamarqand.uz";
 
   return (
-    <footer ref={root} className="relative overflow-hidden border-t border-ivory/10 bg-ink-2 px-5 pt-20 md:px-10">
+    <footer ref={root} data-cv className="relative overflow-hidden border-t border-ivory/10 bg-ink-2 px-5 pt-20 md:px-10">
       <div className="mx-auto grid max-w-[1600px] gap-12 lg:grid-cols-12">
         <div className="lg:col-span-4">
           <Logo />

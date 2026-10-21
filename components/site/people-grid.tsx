@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import type { CouncilMember } from "@/lib/api/types";
 import { memberToPerson, PersonCard } from "./cards";
 import { EmptyState } from "./ui";
@@ -36,22 +36,22 @@ export function MembersGrid({ members }: { members: CouncilMember[] }) {
       {list.length === 0 ? (
         <EmptyState title="Hech narsa topilmadi" text="Boshqa so‘z bilan qidirib ko‘ring." />
       ) : (
-        <motion.div layout className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+        <m.div layout className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           <AnimatePresence mode="popLayout">
-            {list.map((m, i) => (
-              <motion.div
-                key={m.id}
+            {list.map((member, i) => (
+              <m.div
+                key={member.id}
                 layout
                 initial={{ opacity: 0, y: 30, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.6, delay: Math.min(i, 12) * 0.03, ease: [0.16, 1, 0.3, 1] }}
               >
-                <PersonCard person={memberToPerson(m)} href={`/council/members/${m.slug}`} />
-              </motion.div>
+                <PersonCard person={memberToPerson(member)} href={`/council/members/${member.slug}`} />
+              </m.div>
             ))}
           </AnimatePresence>
-        </motion.div>
+        </m.div>
       )}
     </>
   );

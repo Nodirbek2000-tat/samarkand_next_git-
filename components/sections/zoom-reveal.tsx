@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
+import { useSectionSetup } from "@/lib/section-setup";
 import { gpuWhileMoving } from "@/lib/gpu-while-moving";
 import { StarMark } from "@/components/logo";
 
@@ -9,7 +10,8 @@ import { StarMark } from "@/components/logo";
 export function ZoomReveal() {
   const root = useRef<HTMLElement>(null);
 
-  useGSAP(
+  useSectionSetup(
+    root,
     () => {
       const tl = gsap.timeline({
         // phones fly through the word in a shorter scroll
@@ -31,7 +33,6 @@ export function ZoomReveal() {
       const q = gsap.utils.selector(root);
       return gpuWhileMoving(tl, [q("[data-zoom-mask]")[0], q("[data-zoom-inner]")[0]]);
     },
-    { scope: root },
   );
 
   return (

@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
+import { scheduleSetup, useSectionSetup } from "@/lib/section-setup";
 import { isLite } from "@/lib/perf";
 import { gpuWhileMoving } from "@/lib/gpu-while-moving";
 
-import { SCENES, VIEW, type FillKind } from "./heritage-art";
+import { scene, VIEW, type FillKind } from "./heritage-art";
 
 const PLACES = [
   { name: "Registon", kicker: "Yurak", text: "Samarqandning ko‘p asrlik tarixi va me’morchiligining yuragi." },
@@ -28,20 +29,39 @@ const FILL: Record<FillKind, string> = {
 };
 const FILL_ORDER: FillKind[] = ["bg", "tile", "dome", "gold"];
 
+/** A card's drawing as markup — written into the card shortly before it is seen (the five drawings were 66 KB of
+ * the page's HTML and thousands of path points the browser laid out at load). */
+function artMarkup(i: number) {
+  const tint = TINTS[i];
+  return scene(i)
+    .map(
+      (part) =>
+        "<g>" +
+        FILL_ORDER.map((f) => (part.fills[f] ? `<path data-fill d="${part.fills[f]}" style="fill:${FILL[f]}"/>` : "")).join("") +
+        (part.main ? `<path data-line d="${part.main}" stroke-width="1.6" style="stroke:${tint}"/>` : "") +
+        (part.detail ? `<path data-detail d="${part.detail}" stroke-width="0.9" opacity="0.7" style="stroke:${tint}"/>` : "") +
+        "</g>",
+    )
+    .join("");
+}
+
 export function Heritage() {
   const root = useRef<HTMLElement>(null);
 
-  useGSAP(
+  useSectionSetup(
+    root,
     (_, contextSafe) => {
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const cards = gsap.utils.toArray<HTMLElement>("[data-place]");
 
-      // A card's drawing is prepared about a screen before it scrolls in — measuring every line of all five
-      // drawings up front made the page's first seconds heavier.
+      // Each card's drawing is prepared from the same queue as the sections (in a quiet moment, or at once
+      // when the card comes near) — measuring every line of all five drawings in one go was a long freeze.
       const prepare = contextSafe!((card: HTMLElement) => {
         // fit the drawing to its own bounds, so every scene fills the card (no empty sky)
         card.querySelectorAll<SVGSVGElement>("svg[data-art]").forEach((svg) => {
-          const b = (svg.firstElementChild as SVGGElement).getBBox();
+          const g = svg.firstElementChild as SVGGElement;
+          if (!g.firstChild) g.innerHTML = artMarkup(Number(card.dataset.place));
+          const b = g.getBBox();
           const pad = 10;
           svg.setAttribute("viewBox", `${b.x - pad} ${b.y - pad} ${b.width + pad * 2} ${b.height + pad * 2}`);
           // phones: fill the narrow card and let the far sides go, rather than a tiny strip
@@ -64,19 +84,9 @@ export function Heritage() {
             .to(fills, { fillOpacity: 1, duration: 1.1, ease: "power1.out", stagger: 0.02 }, 1.3);
         }
       });
-      const io = new IntersectionObserver(
-        (entries) =>
-          entries.forEach((e) => {
-            if (!e.isIntersecting) return;
-            io.unobserve(e.target);
-            prepare(e.target as HTMLElement);
-          }),
-        { rootMargin: "100% 0px" },
-      );
-
       const stops: (() => void)[] = [];
       cards.forEach((card, i) => {
-        io.observe(card);
+        stops.push(scheduleSetup(card, () => prepare(card)));
         // the next card slides over: this one sinks and dims under an opaque shade (never see-through,
         // so the cards further back never show through it)
         // (one trigger for both; while it moves the card and its shade are GPU layers — no full-card repaint)
@@ -95,12 +105,8 @@ export function Heritage() {
           stops.push(gpuWhileMoving(sink, [inner, shade]));
         }
       });
-      return () => {
-        io.disconnect();
-        stops.forEach((stop) => stop());
-      };
+      return () => stops.forEach((stop) => stop());
     },
-    { scope: root },
   );
 
   return (
@@ -126,7 +132,7 @@ export function Heritage() {
 
         <div className="relative">
           {PLACES.map((p, i) => (
-            <article key={p.name} data-place className="sticky top-16 h-[54svh] pt-4 md:top-24 md:h-[78svh]" style={{ zIndex: i + 1 }}>
+            <article key={p.name} data-place={i} className="sticky top-16 h-[54svh] pt-4 md:top-24 md:h-[78svh]" style={{ zIndex: i + 1 }}>
               <div
                 data-place-inner
                 className="relative flex h-full origin-top flex-col justify-between overflow-hidden rounded-[2rem] border border-ivory/10 bg-ink-2 p-7 md:p-12"
@@ -161,17 +167,8 @@ export function Heritage() {
                   strokeLinejoin="round"
                   aria-hidden
                 >
-                  <g>
-                    {SCENES[i].map((part, k) => (
-                      <g key={k}>
-                        {FILL_ORDER.map((f) =>
-                          part.fills[f] ? <path key={f} data-fill d={part.fills[f]} style={{ fill: FILL[f] }} /> : null,
-                        )}
-                        {part.main && <path data-line d={part.main} strokeWidth={1.6} style={{ stroke: TINTS[i] }} />}
-                        {part.detail && <path data-detail d={part.detail} strokeWidth={0.9} opacity={0.7} style={{ stroke: TINTS[i] }} />}
-                      </g>
-                    ))}
-                  </g>
+                  {/* filled in by prepare() shortly before the card is seen */}
+                  <g />
                 </svg>
 
                 <p className="relative text-ivory/85 md:hidden">{p.text}</p>

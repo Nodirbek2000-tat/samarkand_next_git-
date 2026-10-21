@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Bot,
+  Gauge,
   ExternalLink,
   Inbox,
   LayoutDashboard,
@@ -91,6 +92,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         { href: "/admin/inbox", label: "Kelgan murojaatlar", icon: Inbox, badge: inboxNew },
         { href: "/admin/users", label: "Foydalanuvchilar", icon: Users },
         { href: "/admin/bot", label: "Telegram bot", icon: Bot },
+        { href: "/admin/vitals", label: "Sayt tezligi", icon: Gauge },
         { href: "/admin/settings", label: "Sayt sozlamalari", icon: Settings },
       ],
     });

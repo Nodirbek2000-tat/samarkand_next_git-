@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useSyncExternalStore, type CSSProperties } from "react";
+import { memo, useEffect, useRef, useSyncExternalStore, type CSSProperties } from "react";
 import { useIntroDone } from "@/lib/store";
 import { isLite, onLite } from "@/lib/perf";
 import { JOURNEY, JOURNEY_RAIL, PIECES, journeyImage, type JourneyStop } from "./hero-journey-data";
@@ -40,7 +40,7 @@ function Pieces({ cols, rows, shade = false, ...attrs }: { cols: number; rows: n
   );
 }
 
-function Scene({ stop, i }: { stop: JourneyStop; i: number }) {
+const Scene = memo(function Scene({ stop, i }: { stop: JourneyStop; i: number }) {
   const [cols, rows] = PIECES[stop.exit];
   return (
     <div
@@ -95,7 +95,7 @@ function Scene({ stop, i }: { stop: JourneyStop; i: number }) {
       </div>
     </div>
   );
-}
+});
 
 export function HeroJourney() {
   const ref = useRef<HTMLDivElement>(null);
@@ -169,10 +169,10 @@ export function HeroJourney() {
 }
 
 /** Ekran o'quvchilar uchun sayohat matni (vizual qism aria-hidden). */
-export function HeroJourneySummary() {
+export const HeroJourneySummary = memo(function HeroJourneySummary() {
   return (
     <p className="sr-only">
       Sayohat: Registon, {JOURNEY.map((s) => `${s.title} — ${s.caption}`).join(" ")}
     </p>
   );
-}
+});

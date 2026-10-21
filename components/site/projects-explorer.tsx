@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import type { Project } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { ProjectCard } from "./cards";
@@ -37,10 +37,10 @@ export function ProjectsExplorer({ projects, showFilters = true }: { projects: P
       {list.length === 0 ? (
         <EmptyState title="Bu yo‘nalishda loyihalar hozircha yo‘q" text="Tez orada yangi loyihalar qo‘shiladi." />
       ) : (
-        <motion.div layout className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <m.div layout className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           <AnimatePresence mode="popLayout">
             {list.map((p, i) => (
-              <motion.div
+              <m.div
                 key={p.id}
                 layout
                 initial={{ opacity: 0, y: 40 }}
@@ -49,10 +49,10 @@ export function ProjectsExplorer({ projects, showFilters = true }: { projects: P
                 transition={{ duration: 0.7, delay: Math.min(i, 8) * 0.05, ease: [0.16, 1, 0.3, 1] }}
               >
                 <ProjectCard project={p} />
-              </motion.div>
+              </m.div>
             ))}
           </AnimatePresence>
-        </motion.div>
+        </m.div>
       )}
     </>
   );
@@ -88,7 +88,7 @@ function Chips({
           )}
         >
           {value === o.value && (
-            <motion.span layoutId={layoutId} className="absolute inset-0 rounded-full bg-ivory" transition={{ type: "spring", stiffness: 380, damping: 32 }} />
+            <m.span layoutId={layoutId} className="absolute inset-0 rounded-full bg-ivory" transition={{ type: "spring", stiffness: 380, damping: 32 }} />
           )}
           <span className="relative">{o.label}</span>
         </button>

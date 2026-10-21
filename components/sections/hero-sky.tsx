@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { memo, type CSSProperties } from "react";
 
 /**
  * Life on the hero photograph: twinkling stars and a shooting star in the night sky (placed only
@@ -21,7 +21,7 @@ const STARS: [number, number, number, number, number][] = [
   [63.9, 6.4, 1.2, 3.34, 5.22], [92.8, 18.9, 0.82, 2.68, 3.16],
 ];
 
-export function HeroSky() {
+export const HeroSky = memo(function HeroSky() {
   return (
     <>
       <div className="only-night pointer-events-none absolute inset-0" aria-hidden>
@@ -41,10 +41,10 @@ export function HeroSky() {
       </div>
     </>
   );
-}
+});
 
 /** Intro overlays (inside the zoom layer so they stay pinned to the photograph). */
-export function HeroIntroLight() {
+export const HeroIntroLight = memo(function HeroIntroLight() {
   return (
     <>
       <div data-hero-lights className="hero-lights only-night" aria-hidden />
@@ -52,4 +52,4 @@ export function HeroIntroLight() {
       <div data-hero-sweep className="hero-sweep only-day" aria-hidden />
     </>
   );
-}
+});

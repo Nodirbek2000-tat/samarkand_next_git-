@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
 import { useLenis } from "@/components/providers/smooth-scroll";
 import { cn } from "@/lib/utils";
@@ -41,7 +41,7 @@ export function PhotoGrid({ images, className }: { images: LightboxImage[]; clas
     <>
       <div className={cn("columns-1 gap-4 sm:columns-2 lg:columns-3 [&>*]:mb-4", className)}>
         {images.map((img, i) => (
-          <motion.button
+          <m.button
             key={img.id}
             type="button"
             data-cursor="view"
@@ -69,13 +69,13 @@ export function PhotoGrid({ images, className }: { images: LightboxImage[]; clas
                 {img.caption}
               </span>
             )}
-          </motion.button>
+          </m.button>
         ))}
       </div>
 
       <AnimatePresence>
         {index !== null && (
-          <motion.div
+          <m.div
             className="fixed inset-0 z-[90] flex flex-col bg-black/95"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -94,7 +94,7 @@ export function PhotoGrid({ images, className }: { images: LightboxImage[]; clas
             </div>
             <div className="relative flex-1">
               <AnimatePresence mode="popLayout" initial={false}>
-                <motion.div
+                <m.div
                   key={images[index].id}
                   className="absolute inset-0"
                   initial={{ opacity: 0, scale: 0.96 }}
@@ -109,7 +109,7 @@ export function PhotoGrid({ images, className }: { images: LightboxImage[]; clas
                   }}
                 >
                   <Image src={images[index].image} alt={images[index].caption || "Surat"} fill sizes="100vw" className="object-contain" priority />
-                </motion.div>
+                </m.div>
               </AnimatePresence>
               {images.length > 1 && (
                 <>
@@ -123,7 +123,7 @@ export function PhotoGrid({ images, className }: { images: LightboxImage[]; clas
               )}
             </div>
             {images[index].caption && <p className="p-5 text-center text-lg text-white/90">{images[index].caption}</p>}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </>

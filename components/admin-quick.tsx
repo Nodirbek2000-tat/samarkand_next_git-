@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { ArrowUpRight, Inbox, Plus, Settings, Users } from "lucide-react";
 import { apiFetch } from "@/lib/api/client";
 import type { SessionUser } from "@/lib/session";
@@ -57,7 +57,7 @@ export function AdminQuick({ user, className }: { user: SessionUser; className?:
 
       <AnimatePresence>
         {open && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
@@ -134,7 +134,7 @@ export function AdminQuick({ user, className }: { user: SessionUser; className?:
                 <Plus className="size-4" />
               </Link>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

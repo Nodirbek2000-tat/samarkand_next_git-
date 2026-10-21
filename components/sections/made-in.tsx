@@ -2,7 +2,8 @@
 
 import { useRef } from "react";
 import { ArrowUpRight, BookOpen, Languages, Factory, BadgeCheck, MapPin, Users } from "lucide-react";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
+import { useSectionSetup } from "@/lib/section-setup";
 import { gpuWhileMoving } from "@/lib/gpu-while-moving";
 import { Magnetic } from "@/components/magnetic";
 import { Roll } from "@/components/roll";
@@ -28,7 +29,8 @@ const SECTORS = [
 export function MadeIn() {
   const root = useRef<HTMLElement>(null);
 
-  useGSAP(
+  useSectionSetup(
+    root,
     () => {
       const mm = gsap.matchMedia();
       // the huge "406" and the girih ring scale with the scroll: GPU textures while they move, sharp at rest
@@ -91,7 +93,6 @@ export function MadeIn() {
       });
       return () => mm.revert();
     },
-    { scope: root },
   );
 
   return (

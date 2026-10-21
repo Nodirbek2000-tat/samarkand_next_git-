@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { ArrowUpRight, CheckCircle2, Clock, Mail, MapPin, Phone } from "lucide-react";
-import { gsap, SplitText, useGSAP } from "@/lib/gsap";
+import { gsap, SplitText } from "@/lib/gsap";
+import { useSectionSetup } from "@/lib/section-setup";
 import { Magnetic } from "@/components/magnetic";
 import { Roll } from "@/components/roll";
 import { cn } from "@/lib/utils";
@@ -54,7 +55,8 @@ export function Cta() {
   const [topic, setTopic] = useState(TOPICS[0]);
   const [sent, setSent] = useState(false);
 
-  useGSAP(
+  useSectionSetup(
+    root,
     () => {
       SplitText.create("[data-cta-title]", {
         type: "chars,lines",
@@ -88,7 +90,6 @@ export function Cta() {
         },
       );
     },
-    { scope: root },
   );
 
   // No backend yet: compose the appeal into the visitor's mail client.
@@ -109,7 +110,7 @@ export function Cta() {
   };
 
   return (
-    <section ref={root} id="aloqa" className="relative overflow-hidden bg-ink px-5 py-32 md:px-10 md:py-44">
+    <section ref={root} id="aloqa" data-cv className="relative overflow-hidden bg-ink px-5 py-32 md:px-10 md:py-44">
       {/* the wrapper grows with the scroll (GSAP), the orb inside spins (CSS) — one transform each, on the GPU */}
       <div data-orb className="pointer-events-none absolute left-1/2 top-1/3 size-[80vmin] -translate-x-1/2 -translate-y-1/2 will-change-transform">
         <div className="orb size-full rounded-full" />
@@ -166,7 +167,7 @@ export function Cta() {
           <div data-cta-form className="glass relative overflow-hidden rounded-[2rem] p-6 md:p-10 lg:col-span-8">
             <AnimatePresence mode="wait">
               {sent ? (
-                <motion.div
+                <m.div
                   key="ok"
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -174,9 +175,9 @@ export function Cta() {
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                   className="flex min-h-[420px] flex-col items-center justify-center text-center"
                 >
-                  <motion.div initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 200, damping: 14 }}>
+                  <m.div initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 200, damping: 14 }}>
                     <CheckCircle2 className="size-20 text-turq" />
-                  </motion.div>
+                  </m.div>
                   <h3 className="mt-6 font-display text-3xl font-semibold">Pochta ilovangiz ochildi</h3>
                   <p className="mt-3 max-w-md text-ivory/85">
                     Xatni yuborishni yakunlang — murojaatingiz {EMAIL} manziliga yetib boradi.
@@ -189,9 +190,9 @@ export function Cta() {
                   >
                     <Roll>Yana yozish</Roll>
                   </button>
-                </motion.div>
+                </m.div>
               ) : (
-                <motion.form
+                <m.form
                   key="form"
                   onSubmit={submit}
                   initial={{ opacity: 0 }}
@@ -212,7 +213,7 @@ export function Cta() {
                         )}
                       >
                         {topic === t && (
-                          <motion.span layoutId="topic-pill" className="absolute inset-0 rounded-full bg-turq" transition={{ type: "spring", stiffness: 400, damping: 32 }} />
+                          <m.span layoutId="topic-pill" className="absolute inset-0 rounded-full bg-turq" transition={{ type: "spring", stiffness: 400, damping: 32 }} />
                         )}
                         <span className="relative">{t}</span>
                       </button>
@@ -246,7 +247,7 @@ export function Cta() {
                       </button>
                     </Magnetic>
                   </div>
-                </motion.form>
+                </m.form>
               )}
             </AnimatePresence>
           </div>

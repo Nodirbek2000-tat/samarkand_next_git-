@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { ArrowUpRight, Award, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
-import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useSectionSetup } from "@/lib/section-setup";
 import { cn } from "@/lib/utils";
 import { useLenis } from "@/components/providers/smooth-scroll";
 import { Roll } from "@/components/roll";
@@ -27,6 +28,7 @@ export function Forum() {
   const root = useRef<HTMLElement>(null);
   const trigger = useRef<ScrollTrigger | null>(null);
   const lastYear = useRef(0);
+  const lastHeight = useRef(0);
   const lenis = useLenis();
   const [pinned, setPinned] = useState(false);
   const [wide, setWide] = useState(false);
@@ -65,7 +67,22 @@ export function Forum() {
     setView(0);
   };
 
-  useGSAP(
+  // The layout this screen gets is set as soon as the page is up (the setup below sets it again on a resize):
+  // the section has its final height before its pin is measured, so it does not shift everything below
+  // right after (which used to cost a full re-measure of the page in the middle of someone's scroll).
+  useEffect(() => {
+    const q = (media: string) => window.matchMedia(media).matches;
+    const isWide = q(WIDE);
+    // media queries are an outside system read once at mount; the setup keeps them in sync afterwards
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setWide(isWide);
+    setPerView(isWide ? (q(TALL) ? 4 : 2) : q(TABLET) && q(TALL) ? 2 : 1);
+    setPinned(q(FITS));
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
+
+  useSectionSetup(
+    root,
     () => {
       const mm = gsap.matchMedia();
       mm.add({ wide: WIDE, tablet: TABLET, tall: TALL, fits: FITS }, (ctx) => {
@@ -97,6 +114,8 @@ export function Forum() {
             setBar?.(self.progress);
           },
         });
+        // the pin's own spacing is not a layout change (see the ResizeObserver below)
+        lastHeight.current = root.current?.offsetHeight ?? 0;
         // re-created on a resize: keep the refresh order = page order (see components/providers/smooth-scroll)
         ScrollTrigger.sort();
         return () => {
@@ -113,7 +132,6 @@ export function Forum() {
       });
       return () => mm.revert();
     },
-    { scope: root },
   );
 
   // the stage changes height when the layout switches: the pinned scenes below must re-measure
@@ -121,10 +139,12 @@ export function Forum() {
     const el = root.current;
     if (!el) return;
     let t = 0;
-    let last = el.offsetHeight;
+    lastHeight.current = el.offsetHeight;
     const ro = new ResizeObserver(() => {
-      if (el.offsetHeight === last) return;
-      last = el.offsetHeight;
+      if (el.offsetHeight === lastHeight.current) return;
+      lastHeight.current = el.offsetHeight;
+      // before its pin exists (the setup comes from the queue) nothing below has been measured yet
+      if (!trigger.current) return;
       clearTimeout(t);
       t = window.setTimeout(() => ScrollTrigger.refresh(), 200);
     });
@@ -258,7 +278,7 @@ export function Forum() {
               )}
             >
               <AnimatePresence initial={false}>
-                <motion.span
+                <m.span
                   key={y.year}
                   className="absolute right-0 top-0"
                   initial={{ y: "40%", opacity: 0 }}
@@ -267,7 +287,7 @@ export function Forum() {
                   transition={{ duration: 0.8, ease }}
                 >
                   {y.year}
-                </motion.span>
+                </m.span>
               </AnimatePresence>
             </div>
 
@@ -309,22 +329,22 @@ export function Forum() {
             </div>
 
             <AnimatePresence mode="wait">
-              <motion.ul
+              <m.ul
                 key={`${y.year}-${cat}-${view}`}
                 className={cn("relative mt-4 grid gap-3", perView > 1 && "grid-cols-2")}
                 exit={{ opacity: 0, y: -24, transition: { duration: 0.25 } }}
               >
                 {onScreen.map((n, i) => (
-                  <motion.li
+                  <m.li
                     key={n.title}
                     initial={{ opacity: 0, y: 32 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.08 * i, duration: 0.7, ease }}
                   >
                     <NominationCard n={n} index={y.nominations.indexOf(n)} compact />
-                  </motion.li>
+                  </m.li>
                 ))}
-              </motion.ul>
+              </m.ul>
             </AnimatePresence>
 
             {/* the rest of this forum, without scrolling the page */}
