@@ -12,10 +12,10 @@
   --color-ink-3: #ece6d9;
   --color-ivory: #0b1424;
   --color-mist: #4a5568;
-  --color-turq: #00736c;
+  --color-turq: #0f7a3d;
   --color-lapis: #2340d4;
-  --color-gold: #93560a;
-  --color-ember: #cf4d14;
+  --color-gold: #f97316;
+  --color-ember: #c62828;
   --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -28,9 +28,9 @@
 :root {
   --background: var(--color-ink);
   --foreground: var(--color-ivory);
-  --grad-1: #007f78;
+  --grad-1: #0f7a3d;
   --grad-2: #2340d4;
-  --grad-3: #a5620b;
+  --grad-3: #f97316;
   --grad-4: #cf4d14;
   --glass-from: rgb(255 255 255 / 0.82);
   --glass-to: rgb(255 255 255 / 0.6);
@@ -50,13 +50,13 @@
   --color-ink-3: #20255a;
   --color-ivory: #f4efe4;
   --color-mist: #b3bccf;
-  --color-turq: #2ee8d6;
+  --color-turq: #34d07a;
   --color-lapis: #5b78ff;
-  --color-gold: #f3c46b;
-  --color-ember: #ff7847;
-  --grad-1: #2ee8d6;
-  --grad-2: #9ff6ec;
-  --grad-3: #f3c46b;
+  --color-gold: #ff8a1f;
+  --color-ember: #ff5a4f;
+  --grad-1: #34d07a;
+  --grad-2: #b6f5cf;
+  --grad-3: #ff8a1f;
   --grad-4: #ff7847;
   --glass-from: rgb(32 38 86 / 0.88);
   --glass-to: rgb(23 27 64 / 0.78);
@@ -763,8 +763,8 @@ html[data-lite] .grain {
    mix-blend yo'q) — scroll paytida brauzer hech narsani qayta chizmaydi, faqat GPU qatlamlarini suradi.
    Rasmlar: kichik ekran va "yengil rejim"da asl o'lcham (sm), katta ekranda 1920 px (lg), AVIF/WebP. */
 .journey {
-  --j-gold: #f3c46b;
-  --j-turq: #2ee8d6;
+  --j-gold: #ff8a1f;
+  --j-turq: #34d07a;
   --j-text: #fff8ec;
   position: absolute;
   inset: 0;
@@ -1034,7 +1034,7 @@ html[data-lite] .grain {
   margin-left: -21px;
   border: 1px solid currentColor;
   border-radius: 999px;
-  background: rgb(243 196 107 / var(--on));
+  background: rgb(255 138 31 / var(--on));
 }
 .j-rail-track {
   position: absolute;

@@ -45,11 +45,11 @@ export function LoginScreen() {
     <main className="relative grid min-h-svh overflow-hidden bg-ink lg:grid-cols-2">
       {/* brand side */}
       <section className="relative hidden overflow-hidden bg-gradient-to-br from-[#062a2a] via-[#0b1a4a] to-[#2a1606] p-12 text-white lg:flex lg:flex-col lg:justify-between">
-        <svg viewBox="0 0 400 400" className="spin-slower absolute -right-40 -top-40 size-[900px] opacity-20" fill="none" stroke="#f3c46b" strokeWidth="0.5" aria-hidden>
+        <svg viewBox="0 0 400 400" className="spin-slower absolute -right-40 -top-40 size-[900px] opacity-20" fill="none" stroke="#ff8a1f" strokeWidth="0.5" aria-hidden>
           {Array.from({ length: 24 }).map((_, i) => (
             <rect key={i} x="80" y="80" width="240" height="240" transform={`rotate(${i * 3.75} 200 200)`} />
           ))}
-          <circle cx="200" cy="200" r="196" stroke="#2ee8d6" />
+          <circle cx="200" cy="200" r="196" stroke="#34d07a" />
         </svg>
         <div className="orb absolute -bottom-40 -left-40 size-[520px] opacity-40" />
         <div className="relative [&_*]:!text-white">
@@ -60,7 +60,7 @@ export function LoginScreen() {
           <h1 className="mt-8 font-display text-6xl font-bold uppercase leading-[0.95] tracking-tight">
             Boshqaruv
             <br />
-            <span className="bg-gradient-to-r from-[#2ee8d6] via-[#f3c46b] to-[#ff7847] bg-clip-text text-transparent">paneli</span>
+            <span className="bg-gradient-to-r from-[#34d07a] via-[#ff8a1f] to-[#ff7847] bg-clip-text text-transparent">paneli</span>
           </h1>
           <p className="mt-6 max-w-md text-lg text-white/80">Yangiliklar, loyihalar, Kengash a’zolari, forum natijalari va murojaatlar — barchasi bir joyda.</p>
         </motion.div>

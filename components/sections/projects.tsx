@@ -13,21 +13,21 @@ const PROJECTS = [
     kind: "Ijtimoiy loyiha",
     meta: "Obodonlashtirish",
     text: "Qadimiy Siyob kanali sohilini turizm va sayr yo‘laklari uchun kompleks obodonlashtirish.",
-    colors: ["#2ee8d6", "#0b3d91", "#03050b"],
+    colors: ["#34d07a", "#0b3d91", "#03050b"],
   },
   {
     title: "Made in Samarkand",
     kind: "Katalog",
     meta: "406 korxona",
     text: "Samarqand viloyatida ishlab chiqarilgan mahsulotlarning bosma va elektron katalogi.",
-    colors: ["#f3c46b", "#ff7847", "#1a0b03"],
+    colors: ["#ff8a1f", "#ff7847", "#1a0b03"],
   },
   {
     title: "Yoshlar startaplari",
     kind: "Innovatsiya",
     meta: "30 loyiha · 2024",
     text: "Yoshlar startaplari va ilmiy ishlanmalarni Kengash qarori bilan moliyalashtirish.",
-    colors: ["#3b5bff", "#2ee8d6", "#020418"],
+    colors: ["#3b5bff", "#34d07a", "#020418"],
   },
   {
     title: "Uz Made",
@@ -41,14 +41,14 @@ const PROJECTS = [
     kind: "Biznes muhit",
     meta: "Har yili",
     text: "Lokalizatsiya, kooperatsiya va eksport masalalari muhokama qilinadigan viloyat forumi.",
-    colors: ["#f3c46b", "#2ee8d6", "#04110f"],
+    colors: ["#ff8a1f", "#34d07a", "#04110f"],
   },
   {
     title: "Biznes klublar",
     kind: "HR · Buxgalterlar",
     meta: "Professional hamjamiyat",
     text: "HR-mutaxassislar hamda buxgalterlar, auditorlar va soliq maslahatchilari klublari.",
-    colors: ["#2ee8d6", "#f3c46b", "#03050b"],
+    colors: ["#34d07a", "#ff8a1f", "#03050b"],
   },
 ];
 

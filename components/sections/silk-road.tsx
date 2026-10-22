@@ -171,7 +171,7 @@ export function SilkRoad() {
                 className="group flex items-center justify-between py-3.5 transition-colors duration-300 hover:text-turq"
               >
                 <span className="flex items-center gap-3">
-                  <span className="size-1.5 rounded-full bg-turq shadow-[0_0_12px_#2ee8d6] transition-transform duration-500 group-hover:scale-150" />
+                  <span className="size-1.5 rounded-full bg-turq shadow-[0_0_12px_var(--color-turq)] transition-transform duration-500 group-hover:scale-150" />
                   <span className="font-display text-lg font-medium">
                     Samarqand <span className="text-ivory/60">→</span> {c.name}
                   </span>

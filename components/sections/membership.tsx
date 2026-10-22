@@ -124,7 +124,7 @@ export function Membership() {
                 className="tier-foil pointer-events-none absolute inset-0 -z-10 opacity-0 mix-blend-color-dodge transition-opacity duration-500 group-hover:opacity-60"
                 style={{
                   background:
-                    "conic-gradient(from var(--angle, 0deg) at var(--px, 50%) var(--py, 50%), #2ee8d6, #3b5bff, #ff7847, #f3c46b, #2ee8d6)",
+                    "conic-gradient(from var(--angle, 0deg) at var(--px, 50%) var(--py, 50%), #34d07a, #3b5bff, #ff7847, #ff8a1f, #34d07a)",
                 }}
               />
               <div

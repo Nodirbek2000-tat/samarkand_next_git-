@@ -39,7 +39,7 @@ export function ZoomReveal() {
     <section ref={root} className="relative h-svh overflow-hidden bg-ink">
       {/* what lives "inside" the word */}
       <div data-zoom-inner className="absolute inset-0">
-        <div className="absolute inset-0 bg-[conic-gradient(from_200deg_at_50%_50%,#2ee8d6,#3b5bff,#ff7847,#f3c46b,#2ee8d6)]" />
+        <div className="absolute inset-0 bg-[conic-gradient(from_200deg_at_50%_50%,#34d07a,#3b5bff,#ff7847,#ff8a1f,#34d07a)]" />
         <div className="orb absolute left-1/2 top-1/2 size-[90vmax] -translate-x-1/2 -translate-y-1/2 opacity-80" />
         <svg viewBox="0 0 400 400" className="spin-slower absolute left-1/2 top-1/2 size-[140vmax] -translate-x-1/2 -translate-y-1/2 opacity-30" fill="none" stroke="#03050b" strokeWidth="0.6" aria-hidden>
           {Array.from({ length: 16 }).map((_, i) => (

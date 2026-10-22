@@ -199,7 +199,7 @@ export function startGlobe(canvas: HTMLCanvasElement | OffscreenCanvas, init: Gl
   // ---------- Silk Road arcs from Samarkand, a light running along each
   const origin = toVec(SAMARKAND.lat, SAMARKAND.lon);
   const markerGeo = keep(new THREE.SphereGeometry(0.03, 12, 12));
-  const markerMat = keep(new THREE.MeshBasicMaterial({ color: "#2ee8d6", toneMapped: false }));
+  const markerMat = keep(new THREE.MeshBasicMaterial({ color: "#34d07a", toneMapped: false }));
   CITIES.forEach((c, i) => {
     const end = toVec(c.lat, c.lon);
     const dist = origin.distanceTo(end);
@@ -230,7 +230,7 @@ export function startGlobe(canvas: HTMLCanvasElement | OffscreenCanvas, init: Gl
           void main() {
             float head = fract(uTime * 0.22 + uOffset) * 1.4 - 0.2;
             float trail = smoothstep(head - 0.35, head, vT) * (1.0 - smoothstep(head, head + 0.02, vT));
-            vec3 col = mix(vec3(0.95, 0.77, 0.42), vec3(0.18, 0.91, 0.84), vT);
+            vec3 col = mix(vec3(1.0, 0.54, 0.12), vec3(0.2, 0.82, 0.48), vT);
             float base = 0.12;
             gl_FragColor = vec4(col * (base + trail * 2.4), base + trail);
           }
@@ -251,17 +251,17 @@ export function startGlobe(canvas: HTMLCanvasElement | OffscreenCanvas, init: Gl
   beacon.add(
     new THREE.Mesh(
       keep(new THREE.SphereGeometry(0.06, 16, 16)),
-      keep(new THREE.MeshBasicMaterial({ color: "#f3c46b", toneMapped: false })),
+      keep(new THREE.MeshBasicMaterial({ color: "#ff8a1f", toneMapped: false })),
     ),
   );
   const ringMat = keep(
-    new THREE.MeshBasicMaterial({ color: "#f3c46b", transparent: true, side: THREE.DoubleSide, depthWrite: false }),
+    new THREE.MeshBasicMaterial({ color: "#ff8a1f", transparent: true, side: THREE.DoubleSide, depthWrite: false }),
   );
   const ring = new THREE.Mesh(keep(new THREE.RingGeometry(0.07, 0.09, 48)), ringMat);
   beacon.add(ring);
   const stem = new THREE.Mesh(
     keep(new THREE.CylinderGeometry(0.004, 0.004, 1, 6)),
-    keep(new THREE.MeshBasicMaterial({ color: "#f3c46b", transparent: true, opacity: 0.6 })),
+    keep(new THREE.MeshBasicMaterial({ color: "#ff8a1f", transparent: true, opacity: 0.6 })),
   );
   stem.position.z = 0.5;
   beacon.add(stem);
