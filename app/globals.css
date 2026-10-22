@@ -12,7 +12,7 @@
   --color-ink-3: #ece6d9;
   --color-ivory: #0b1424;
   --color-mist: #4a5568;
-  --color-turq: #0f7a3d;
+  --color-turq: #16a34a;
   --color-lapis: #2340d4;
   --color-gold: #f97316;
   --color-ember: #c62828;
@@ -28,7 +28,7 @@
 :root {
   --background: var(--color-ink);
   --foreground: var(--color-ivory);
-  --grad-1: #0f7a3d;
+  --grad-1: #16a34a;
   --grad-2: #2340d4;
   --grad-3: #f97316;
   --grad-4: #cf4d14;
