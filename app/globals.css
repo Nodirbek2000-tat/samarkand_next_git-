@@ -661,10 +661,6 @@ html[data-lite] .tier-foil {
 html[data-lite] .art-spin {
   animation: none;
 }
-/* sections the browser may skip while far off screen (components/offscreen-pause.tsx sets the size) */
-.cv-skip {
-  content-visibility: auto;
-}
 /* the gate's rays, sparks and rings stay on weak machines too — cheaper: fewer sparks, rings without a glow */
 html[data-lite] .gate-sparks > span:nth-child(n + 13) {
   display: none;

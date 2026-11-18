@@ -18,8 +18,8 @@ ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw enable
 ## 1. O‘rnatish
 
 ```bash
-git clone https://github.com/Nodirbek2000-tat/samarkand_next_git-.git /opt/mentadbirkor/frontend
-cd /opt/mentadbirkor/frontend
+git clone https://github.com/Nodirbek2000-tat/samarkand_next_git-.git /opt/sambizsupport/samarkand_next_git-
+cd /opt/sambizsupport/samarkand_next_git-
 cp server.env.example .env
 nano .env        # CERTBOT_EMAIL va backend dagi bilan bir xil NEXT_REVALIDATE_SECRET
 docker compose up -d --build
@@ -48,9 +48,15 @@ Ochib ko‘ring: https://sambizsupport.uz
 ## 3. Yangilash
 
 ```bash
-cd /opt/mentadbirkor/frontend
+cd /opt/sambizsupport/samarkand_next_git-
 git pull
 docker compose up -d --build
+```
+
+Har yangilashdan keyin rasmlarni oldindan tayyorlang (fonda ishlaydi, saytga xalal bermaydi):
+
+```bash
+nohup bash scripts/warm-images.sh >/tmp/warm-images.log 2>&1 &
 ```
 
 ## Muammolar
@@ -60,4 +66,4 @@ docker compose up -d --build
 | Sertifikat olinmayapti | DNS hali shu serverga ko‘rsatmayapti yoki 80-port yopiq — `docker compose logs nginx` |
 | Ko‘p urinishdan keyin Let’s Encrypt bloklaydi | `.env` da `CERTBOT_STAGING=1` bilan sinang, ishlagach `0` ga qaytaring |
 | `docker compose` «CERTBOT_EMAIL kerak» deydi | `.env` ga `CERTBOT_EMAIL=...` yozing |
-| `/api` 502 beradi | backend ishlamayapti: `/opt/mentadbirkor/backend` da `docker compose ps` |
+| `/api` 502 beradi | backend ishlamayapti: `/opt/sambizsupport/samarkand_git-` da `docker compose ps` |

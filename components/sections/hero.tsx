@@ -186,10 +186,16 @@ export function Hero() {
         // phones: the same timeline in a shorter scroll — less thumb work, punchier transitions
         end: () => `+=${Math.round(tl.duration() * (window.innerWidth < 768 ? 150 : 260))}%`,
         pin: true,
-        scrub: 1,
+        // half a second of smoothing: with a full second the title was still fading back in (half see-through)
+        // well after the page had come to rest at the top
+        scrub: 0.5,
         refreshPriority: 1,
         animation: tl,
         onUpdate: (self) => {
+          // A jump — a fast flick, Home/End, the logo or a menu link — goes straight to its frame. Smoothing it
+          // played every scene in between within half a second: the gate, the flash and the whole journey
+          // flickered across the screen, which on a slower computer also froze the page.
+          if (Math.abs(self.progress - tl.progress()) > 0.15) self.getTween()?.progress(1);
           if (past === self.progress > 0.02) return;
           past = !past;
           section?.toggleAttribute("data-hero-past", past);

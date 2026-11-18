@@ -34,6 +34,9 @@ export const metadata: Metadata = {
     locale: "uz_UZ",
     type: "website",
   },
+  // Chrome often takes Uzbek (Latin) for Turkish and offers to "translate" it: the animated titles are split into
+  // letters, and the translation glued words into them ("YANGMEN", "HAQMENDA"). The site is Uzbek only.
+  other: { google: "notranslate" },
 };
 
 export const viewport: Viewport = {
@@ -47,6 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="uz"
+      translate="no"
       data-theme="light"
       suppressHydrationWarning
       className={`${unbounded.variable} ${manrope.variable} ${jetbrains.variable} antialiased`}
