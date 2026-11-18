@@ -570,7 +570,6 @@ export const SETTINGS_RESOURCE: Resource = {
     { name: "email", label: "Email", type: "email" },
     { name: "working_hours", label: "Ish vaqti", type: "text", placeholder: "Du–Ju: 9:00–18:00" },
     { name: "address", label: "Manzil", type: "text", span: 2 },
-    { name: "map_embed_url", label: "Xarita (Google Maps «embed» havolasi)", type: "url", span: 2, help: "Bo‘sh qoldirilsa, manzil bo‘yicha xarita ko‘rsatiladi" },
     { name: "telegram", label: "Telegram", type: "url" },
     { name: "instagram", label: "Instagram", type: "url" },
     { name: "facebook", label: "Facebook", type: "url" },

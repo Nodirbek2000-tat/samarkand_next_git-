@@ -42,7 +42,7 @@ export function FooterMotto() {
       onPointerEnter={(e) => e.pointerType === "mouse" && next()}
       onClick={next}
       aria-label={`Kengash shiori: ${motto.text}. Keyingisi`}
-      className="mx-auto mt-16 flex w-full max-w-[1600px] items-center gap-4 border-t border-ivory/10 pt-8 text-left md:gap-6"
+      className="mx-auto mt-10 flex w-full max-w-[1600px] items-center gap-4 border-t border-ivory/10 pt-6 text-left md:gap-6"
     >
       <span className="hidden shrink-0 font-mono text-[12px] uppercase tracking-[0.18em] text-mist sm:block">Shiorimiz</span>
       <span className="relative block h-[2.4em] flex-1 overflow-hidden sm:h-[1.2em] font-display text-[clamp(1.1rem,4.2vw,3.25rem)] font-semibold uppercase leading-[1.2] tracking-[-0.02em]">

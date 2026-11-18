@@ -30,7 +30,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings | null }) {
   const email = settings?.email || "info@yangisamarqand.uz";
 
   return (
-    <footer ref={root} data-cv className="relative overflow-hidden border-t border-ivory/10 bg-ink-2 px-5 pt-20 md:px-10">
+    <footer ref={root} data-cv className="relative overflow-hidden border-t border-ivory/10 bg-ink-2 px-5 pt-14 md:px-10">
       <div className="mx-auto grid max-w-[1600px] gap-12 lg:grid-cols-12">
         <div className="lg:col-span-4">
           <Logo />
@@ -104,7 +104,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings | null }) {
       <div
         data-giant
         aria-hidden
-        className="mx-auto mt-12 flex max-w-[1600px] justify-between overflow-hidden font-display text-[10.5vw] font-bold uppercase leading-[0.8] tracking-[-0.05em]"
+        className="mx-auto mt-6 flex max-w-[1600px] justify-center overflow-hidden font-display text-[12vw] font-bold uppercase leading-[0.85] tracking-[-0.04em] md:text-[6.5vw]"
       >
         {"SAMARQAND".split("").map((ch, i) => (
           <span key={i} className="text-gradient inline-block">

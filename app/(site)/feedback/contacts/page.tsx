@@ -19,8 +19,6 @@ export default async function ContactsPage() {
     s?.telegram && { icon: Send, label: "Telegram", value: "Kanalga o‘tish", href: s.telegram },
   ].filter(Boolean) as { icon: typeof Phone; label: string; value: string; href?: string }[];
 
-  const mapSrc = s?.map_embed_url || `https://www.google.com/maps?q=${encodeURIComponent(s?.address || "Registon, Samarqand")}&output=embed`;
-
   return (
     <>
       <PageHero
@@ -54,9 +52,6 @@ export default async function ContactsPage() {
               </div>
             );
           })}
-        </Reveal>
-        <Reveal className="mt-8 overflow-hidden rounded-[2rem] border border-ivory/10">
-          <iframe src={mapSrc} title="Xarita" className="h-[420px] w-full grayscale-[30%]" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
         </Reveal>
       </Container>
       <section className="bg-ink-2 py-10 md:py-14">
