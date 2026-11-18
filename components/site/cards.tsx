@@ -16,7 +16,7 @@ export function ProjectCard({ project, className }: { project: Project; classNam
       <div className="relative aspect-[16/10] overflow-hidden">
         <Cover src={project.cover} alt={project.title} seed={project.slug} className={cn("absolute inset-0", zoom)} />
         <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-          <span className="rounded-full bg-white/90 px-3 py-1 text-[13px] font-semibold text-[#0b1424]">{project.category_label}</span>
+          <span className="rounded-full bg-white/90 px-3 py-1 text-[13px] font-semibold text-[#3f444c]">{project.category_label}</span>
           <span
             className={cn(
               "rounded-full px-3 py-1 text-[13px] font-semibold",
@@ -53,7 +53,7 @@ export function NewsCard({ item, featured = false, className }: { item: NewsItem
     <Link href={`/news/${item.slug}`} data-cursor="view" data-cursor-label="O‘qish" className={cn(card, featured && "lg:flex-row", className)}>
       <div className={cn("relative overflow-hidden", featured ? "aspect-[16/10] lg:aspect-auto lg:w-[58%]" : "aspect-[16/10]")}>
         <Cover src={item.cover} alt={item.title} seed={item.slug} className={cn("absolute inset-0", zoom)} sizes={featured ? "60vw" : undefined} />
-        <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-[13px] font-semibold text-[#0b1424]">
+        <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-[13px] font-semibold text-[#3f444c]">
           {item.category_label}
         </span>
       </div>
@@ -207,7 +207,7 @@ export function FilmCard({ film, className }: { film: Film; className?: string }
       <div className="relative aspect-video overflow-hidden">
         <Cover src={film.cover} alt={film.title} seed={film.slug} className={cn("absolute inset-0", zoom)} />
         <span className="absolute inset-0 grid place-items-center">
-          <span className="grid size-16 place-items-center rounded-full bg-white/90 text-[#0b1424] shadow-xl transition-transform duration-700 ease-expo group-hover:scale-110">
+          <span className="grid size-16 place-items-center rounded-full bg-white/90 text-[#3f444c] shadow-xl transition-transform duration-700 ease-expo group-hover:scale-110">
             <Play className="ml-1 size-7 fill-current" />
           </span>
         </span>

@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     "Samarqand viloyati tadbirkorlarining jamoat maslahat kengashi: hokimiyat va biznes muloqoti, investitsiyalar, sanoat kooperatsiyasi va ijtimoiy loyihalar.",
   openGraph: {
     title: "Yangi Samarqand",
-    description: "Hokimiyat va biznes muloqoti — mintaqa taraqqiyotining asosi.",
+    description: "Hokimiyat va biznes muloqoti — viloyat taraqqiyotining asosi.",
     locale: "uz_UZ",
     type: "website",
   },

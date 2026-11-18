@@ -106,7 +106,7 @@ export function Manifesto() {
           data-manifesto
           className="max-w-[22ch] font-display text-[9vw] font-medium leading-[1.02] tracking-[-0.03em] md:max-w-[26ch] md:text-[5.2vw]"
         >
-          Biz mintaqaning biznes va investitsiya muhitini <span className="font-accent text-turq">yaxshilashga</span>, jamiyatda
+          Biz viloyatning biznes va investitsiya muhitini <span className="font-accent text-turq">yaxshilashga</span>, jamiyatda
           tadbirkorlar nufuzini <span className="font-accent text-gold">mustahkamlashga</span> va korxonalarning barqaror
           rivojlanishiga hissa qo‘shamiz.
         </p>
@@ -114,7 +114,7 @@ export function Manifesto() {
         {/* the council's slogan */}
         <p className="mt-10 flex flex-wrap items-baseline gap-x-4 gap-y-1 md:mt-12">
           <span className="font-mono text-[12px] uppercase tracking-[0.22em] text-mist">Shior</span>
-          <span className="font-accent text-2xl text-gold md:text-3xl">Tadbirkorlikni jadal rivojlantirish sari birgamiz.</span>
+          <span className="font-accent text-2xl text-gold md:text-3xl">Birgalikda — tadbirkorlik yuksalishi sari!</span>
         </p>
 
         <p className="mt-14 font-mono text-[12px] uppercase tracking-[0.22em] text-mist md:mt-20">Maqsadlarimiz</p>

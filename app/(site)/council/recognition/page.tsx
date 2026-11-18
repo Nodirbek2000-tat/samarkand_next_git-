@@ -10,7 +10,7 @@ import { RECOGNITION_INTRO, TEACHERS_DAY, type RecognitionItem } from "@/lib/rec
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Yutuqlarni e’tirof etish — Yangi Samarqand",
+  title: "Eng ilg‘orlarni e’tirof etish — Yangi Samarqand",
   description: "Davlat mukofotlari, faxriy unvonlar va Kengash e’tirofi bilan taqdirlangan Samarqand tadbirkorlari.",
 };
 
@@ -41,7 +41,7 @@ export default async function RecognitionPage() {
     <>
       <PageHero
         kicker="E’tirof"
-        title="Yutuqlarni"
+        title="Eng ilg‘orlarni"
         highlight="e’tirof etish"
         description={page?.subtitle || RECOGNITION_INTRO.subtitle}
         crumbs={[{ label: "Kengash", href: "/council" }, { label: "E’tirof" }]}

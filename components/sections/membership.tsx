@@ -8,6 +8,8 @@ import { followPointer, leavePointer } from "@/lib/pointer";
 import { useLenis } from "@/components/providers/smooth-scroll";
 import { useCoverflow, SwipeHint } from "@/components/coverflow";
 import { Roll } from "@/components/roll";
+import { MottoSeal } from "@/components/motto-seal";
+import { FUTURE } from "@/lib/mottos";
 
 const TIERS = [
   { name: "YaTT va jismoniy shaxslar", fee: "5", note: "Yakka tartibdagi tadbirkorlar", accent: "var(--color-turq)" },
@@ -17,7 +19,7 @@ const TIERS = [
 ];
 
 const BENEFITS = [
-  "Mintaqaning nufuzli tadbirkorlar hamjamiyati a’zosi bo‘lish",
+  "Viloyatning nufuzli tadbirkorlar hamjamiyati a’zosi bo‘lish",
   "Gaz, elektr, suv, kadastr xizmatlarini yaxshilash bo‘yicha takliflar bilan chiqish",
   "Kengash yig‘ilishlarida o‘z biznesingiz muammolarini ko‘tarish va yechim taklif qilish",
   "A’zo-tadbirkorlarning ilg‘or tajribasi bilan tanishish, g‘oyalar almashish",
@@ -87,6 +89,7 @@ export function Membership() {
   return (
     <section ref={root} id="azolik" data-cv className="relative overflow-hidden bg-ink px-5 py-20 md:px-10 md:py-40">
       <div className="pointer-events-none absolute -right-60 -top-60 size-[1000px] rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--color-gold)_12%,transparent),transparent_62%)]" />
+      <MottoSeal motto={FUTURE} className="right-5 top-3 md:right-10 md:top-14" />
       <div className="relative mx-auto max-w-[1600px]">
         <div className="mb-6 flex flex-col justify-between gap-6 md:mb-16 md:flex-row md:items-end md:gap-8">
           <div>
@@ -160,7 +163,7 @@ export function Membership() {
             <Crown className="size-7 text-gold" />
             <h3 className="mt-6 font-display text-2xl font-semibold">Faxriy a’zolik</h3>
             <p className="mt-3 leading-relaxed text-ivory/85">
-              Mamlakat va mintaqa rivojiga katta hissa qo‘shgan, faol hayot tarzini olib borayotgan pensiya yoshidagi
+              Mamlakat va viloyat rivojiga katta hissa qo‘shgan, faol hayot tarzini olib borayotgan pensiya yoshidagi
               fuqarolar badalsiz a’zo bo‘lishi mumkin.
             </p>
             <button

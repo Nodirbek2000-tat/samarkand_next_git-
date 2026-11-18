@@ -1,26 +1,31 @@
 "use client";
 
+import Link from "next/link";
 import { useRef } from "react";
 import { Award, Handshake, HeartHandshake, Lightbulb, Sprout, ArrowUpRight } from "lucide-react";
 import { gsap } from "@/lib/gsap";
 import { useSectionSetup } from "@/lib/section-setup";
 import { followPointer, leavePointer, spotlightAt } from "@/lib/pointer";
 import { useCoverflow, SwipeHint } from "@/components/coverflow";
+import { MottoSeal } from "@/components/motto-seal";
+import { MAHALLA } from "@/lib/mottos";
 
 // the council's five official directions (client document, also the "values" on /about)
 const ITEMS = [
   {
     icon: HeartHandshake,
-    title: "Ta’lim, sog‘liqni saqlash va kambag‘allikni qisqartirish",
-    text: "Tadbirkorlarning ta’lim, sog‘liqni saqlash va kambag‘allikni qisqartirishga qo‘shayotgan homiylik hissasini ommalashtirish, samarali ijtimoiy loyihalar va ijobiy tajribani tarqatish.",
+    title: "Kambag‘allikni qisqartirish",
+    text: "Kambag‘allikni qisqartirishga qo‘shayotgan hissalari, samarali ijtimoiy loyihalar va ijobiy tajribani ommalashtirish.",
     tag: "Jamiyat",
+    href: "/projects/social",
     hue: "var(--color-turq)",
   },
   {
     icon: Lightbulb,
     title: "Innovatsiyalar va yoshlar startaplari",
-    text: "Innovatsiyalar, samarali g‘oyalar va yoshlar startaplarini aniqlash, ularni tijoratlashtirishgacha yetkazish va moliyalashtirish manbalarini topish.",
+    text: "Innovatsiyalar va yoshlar startaplarini qo‘llab-quvvatlash, ularni tijoratlashtirishgacha yetkazish va moliyalashtirish imkoniyatlarini ko‘rish.",
     tag: "Innovatsiya",
+    href: "/projects/startup",
     hue: "var(--color-lapis)",
   },
   {
@@ -28,6 +33,7 @@ const ITEMS = [
     title: "Kichik, individual va yoshlar tadbirkorligi",
     text: "Kichik, individual va yoshlar tadbirkorligini rivojlantirishga ko‘maklashish: hamkorlik, homiylik va «Ustoz–shogird» mentorlik tamoyillari.",
     tag: "Ko‘mak",
+    href: null,
     hue: "var(--color-gold)",
   },
   {
@@ -35,6 +41,7 @@ const ITEMS = [
     title: "Hamkorlik, birdamlik va qo‘shma loyihalar",
     text: "O‘z ehtiyojlari uchun mahalliy korxonalar mahsuloti va xizmatlaridan foydalanish, istiqbolli loyihalarda birga ishtirok etish, muammolarni hamjihatlikda hal qilish.",
     tag: "Hamkorlik",
+    href: "/cooperation",
     hue: "var(--color-ember)",
   },
   {
@@ -42,6 +49,7 @@ const ITEMS = [
     title: "Salmoqli hissa qo‘shganlarni e’tirof etish",
     text: "O‘n minglab ish o‘rinlari yaratgan tadbirkorlar, faol jamoat arboblari, soha yetakchilari, zamonaviy boshqaruv, IT va sun’iy intellektni joriy etganlarni e’tirof etish va rag‘batlantirish.",
     tag: "E’tirof",
+    href: "/council/recognition",
     hue: "var(--color-turq)",
   },
 ];
@@ -176,14 +184,17 @@ export function Directions() {
             <span className="text-gradient">biznes uchun</span>
           </h2>
           <p className="mt-6 max-w-md text-ivory/80 lg:mt-8">
-            Kengash mintaqa tadbirkorlarini biznes muhitini birga rivojlantirish, ishbilarmonlar manfaatlarini himoya
+            Kengash viloyat tadbirkorlarini biznes muhitini birga rivojlantirish, ishbilarmonlar manfaatlarini himoya
             qilish va ijtimoiy ahamiyatli loyihalarni amalga oshirish uchun birlashtiradi.
           </p>
         </div>
 
+        {/* phones: in the corner; on lg it rides in the pinned row, between the title and the first card */}
+        <MottoSeal motto={MAHALLA} className="right-5 top-3 md:right-10 lg:relative lg:right-auto lg:top-auto lg:shrink-0" />
+
         {/* below lg: one swipeable row; on lg the wrapper dissolves (contents) into the pinned track */}
         <div ref={rail} className="rail-lg lg:contents">
-          {ITEMS.map(({ icon: Icon, title, text, tag, hue }, i) => (
+          {ITEMS.map(({ icon: Icon, title, text, tag, hue, href }, i) => (
             <article
               key={title}
               data-dir-card
@@ -193,6 +204,8 @@ export function Directions() {
               className="group relative flex shrink-0 flex-col justify-between overflow-hidden rounded-[2rem] border border-ivory/10 bg-ink p-8 [transform-style:preserve-3d] lg:h-[68vh] lg:w-[min(30vw,460px)]"
             >
               <div className="spotlight pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+              {/* the whole card opens its page; a direction without a page of its own is not a link */}
+              {href && <Link href={href} aria-label={`${title} — batafsil`} className="absolute inset-0 z-10 rounded-[2rem]" />}
               <div
                 data-dir-art
                 className="pointer-events-none absolute -right-24 -top-24 size-80 opacity-40 transition-opacity duration-700 will-change-transform group-hover:opacity-80"
@@ -216,9 +229,11 @@ export function Directions() {
                 </span>
                 <h3 className="font-display text-2xl font-semibold leading-tight md:text-3xl">{title}</h3>
                 <p className="mt-4 text-sm leading-relaxed text-ivory/80">{text}</p>
-                <span className="mt-8 inline-flex items-center gap-2 font-mono text-[11.5px] uppercase tracking-[0.25em] text-ivory/85 transition-colors group-hover:text-turq">
-                  Batafsil <ArrowUpRight className="size-3.5 transition-transform duration-500 group-hover:rotate-45" />
-                </span>
+                {href && (
+                  <span className="mt-8 inline-flex items-center gap-2 font-mono text-[11.5px] uppercase tracking-[0.25em] text-ivory/85 transition-colors group-hover:text-turq">
+                    Batafsil <ArrowUpRight className="size-3.5 transition-transform duration-500 group-hover:rotate-45" />
+                  </span>
+                )}
               </div>
             </article>
           ))}

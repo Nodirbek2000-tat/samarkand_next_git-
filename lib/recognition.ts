@@ -1,19 +1,9 @@
-// "Yutuqlarni e'tirof etish" sahifasi uchun ma'lumot: avval admin panel (Django API), u javob bermasa —
+// "Eng ilg‘orlarni e’tirof etish" sahifasi uchun ma'lumot: avval admin panel (Django API), u javob bermasa —
 // Kengashning rasmiy ro'yxati (lib/recognition-data.ts).
 import { api } from "@/lib/api/server";
 import { RECOGNITIONS, type RecognitionItem } from "@/lib/recognition-data";
 
-export type AwardKind = "order" | "medal" | "title" | "academy" | "other";
-
-/** what sort of honour an award line is — drives its badge and colour */
-export function awardKind(award: string): AwardKind {
-  const a = award.toLowerCase();
-  if (a.includes("akademiya")) return "academy";
-  if (a.includes("unvon")) return "title";
-  if (a.includes("orden")) return "order";
-  if (a.includes("medal")) return "medal";
-  return "other";
-}
+export { awardKind, type AwardKind } from "@/lib/recognition-data";
 
 const plain = (html: string) =>
   html

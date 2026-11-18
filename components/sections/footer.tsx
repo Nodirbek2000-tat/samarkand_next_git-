@@ -7,7 +7,7 @@ import { Logo } from "@/components/logo";
 import { useLenis } from "@/components/providers/smooth-scroll";
 
 const COLS = [
-  { title: "Kengash", links: ["Biz haqimizda", "Boshqaruv", "Kengash a’zolari", "Yutuqlarni e’tirof etish"] },
+  { title: "Kengash", links: ["Biz haqimizda", "Boshqaruv", "Kengash a’zolari", "Eng ilg‘orlarni e’tirof etish"] },
   { title: "Loyihalar", links: ["Ijtimoiy loyihalar", "Ilmiy ishlanmalar", "Yoshlar startaplari", "Biznes klublar"] },
   { title: "Biznes muhit", links: ["Media loyihalar", "Sanoatchilar forumi", "Made in Samarkand", "Hamkorlik"] },
 ];
@@ -34,7 +34,7 @@ export function Footer() {
         <div className="md:col-span-4">
           <Logo />
           <p className="mt-6 max-w-sm text-sm leading-relaxed text-ivory/85">
-            «Yangi Samarqand» mintaqalarni ijtimoiy-iqtisodiy rivojlantirishga ko‘maklashish bo‘yicha tadbirkorlar
+            Ishbilarmonlarning «Yangi Samarqand» hududlarni ijtimoiy-iqtisodiy rivojlanishiga ko‘maklashuvchi
             jamoat fondi. Samarqand viloyati tadbirkorlarining jamoat maslahat kengashi.
           </p>
         </div>

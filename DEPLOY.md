@@ -3,13 +3,13 @@
 Tartib: **1. backend → 2. frontend → 3. bot**. Backend allaqachon ishlab turgan bo‘lishi kerak
 (u umumiy `mentadbirkor` tarmog‘ini va `mentadbirkor_media` / `mentadbirkor_static` volume'larini ishlatadi).
 
-Sayt faqat **https://mentadbirkor.uz** da ochiladi (`www` → asosiy domenga). Server IP orqali kirilsa,
+Sayt faqat **https://sambizsupport.uz** da ochiladi (`www` → asosiy domenga). Server IP orqali kirilsa,
 ulanish yopiladi (`nginx/user_conf.d/00-only-domain.conf`).
 
 ## 0. Domen (DNS) — birinchi marta
 
-Domen panelida **A** yozuvlari aynan shu server IP manziliga: `mentadbirkor.uz` va `www.mentadbirkor.uz`.
-Tekshirish: `getent hosts mentadbirkor.uz` server IP ni ko‘rsatmaguncha sertifikat olinmaydi. Portlar ochiq bo‘lsin:
+Domen panelida **A** yozuvlari aynan shu server IP manziliga: `sambizsupport.uz` va `www.sambizsupport.uz`.
+Tekshirish: `getent hosts sambizsupport.uz` server IP ni ko‘rsatmaguncha sertifikat olinmaydi. Portlar ochiq bo‘lsin:
 
 ```bash
 ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw enable
@@ -43,7 +43,7 @@ docker compose logs -f nginx                # sertifikat olinishi shu yerda ko�
 docker compose logs -f frontend
 ```
 
-Ochib ko‘ring: https://mentadbirkor.uz
+Ochib ko‘ring: https://sambizsupport.uz
 
 ## 3. Yangilash
 

@@ -13,6 +13,7 @@ import { Directions } from "@/components/sections/directions";
 import { Projects } from "@/components/sections/projects";
 import { MadeIn } from "@/components/sections/made-in";
 import { Forum } from "@/components/sections/forum";
+import { RecognitionShowcase } from "@/components/sections/recognition-showcase";
 import { SilkRoad } from "@/components/sections/silk-road";
 import { Membership } from "@/components/sections/membership";
 import { Heritage } from "@/components/sections/heritage";
@@ -58,6 +59,9 @@ export default async function Home() {
           </Suspense>
           <Suspense>
             <Forum />
+          </Suspense>
+          <Suspense>
+            <RecognitionShowcase />
           </Suspense>
           <Suspense>
             <SilkRoad />

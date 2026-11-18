@@ -6,6 +6,8 @@ import { ArrowUpRight } from "lucide-react";
 import { gsap } from "@/lib/gsap";
 import { useSectionSetup } from "@/lib/section-setup";
 import { useCoverflow, SwipeHint } from "@/components/coverflow";
+import { MottoSeal } from "@/components/motto-seal";
+import { SCHOOL } from "@/lib/mottos";
 
 const PROJECTS = [
   {
@@ -33,7 +35,7 @@ const PROJECTS = [
     title: "Uz Made",
     kind: "Media loyiha",
     meta: "Video seriya",
-    text: "Importni o‘rnini bosuvchi va eksportbop mahsulotlar haqida video loyiha.",
+    text: "Mahsulotlar ishlab chiqaruvchi ilg‘or korxonalar haqida video lavhalar.",
     colors: ["#ff7847", "#7a1fff", "#0d0314"],
   },
   {
@@ -134,6 +136,7 @@ export function Projects() {
         y.set(e.clientY);
       }}
     >
+      <MottoSeal motto={SCHOOL} className="right-5 top-3 md:right-10 md:top-14" />
       <div className="mx-auto max-w-[1600px]">
         <div className="mb-6 flex flex-col justify-between gap-6 md:mb-16 md:flex-row md:items-end md:gap-8">
           <div>
@@ -181,7 +184,7 @@ export function Projects() {
               <div className="absolute inset-0 origin-bottom scale-y-0 bg-ivory transition-transform duration-700 ease-expo group-hover:scale-y-100 max-md:hidden" />
               <div className="relative grid grid-cols-12 items-center gap-3 pb-1 transition-colors duration-500 md:gap-4 md:py-10 md:group-hover:text-ink">
                 <span className="col-span-2 font-mono text-xs text-mist md:col-span-1 md:group-hover:text-ink/60">0{i + 1}</span>
-                <h3 className="col-span-10 font-display text-3xl font-semibold uppercase tracking-tight transition-transform duration-700 ease-expo md:col-span-5 md:text-5xl md:group-hover:translate-x-4">
+                <h3 className="col-span-10 font-display text-3xl font-semibold uppercase tracking-tight text-asphalt transition-transform duration-700 ease-expo md:col-span-5 md:text-5xl md:group-hover:translate-x-4">
                   {p.title}
                 </h3>
                 <p className="col-span-12 text-sm text-ivory/80 md:col-span-3 md:group-hover:text-ink/70">{p.text}</p>

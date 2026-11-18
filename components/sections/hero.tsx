@@ -383,7 +383,7 @@ export function Hero() {
               <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between md:gap-10">
                 <p data-hero-fade className="text-legible max-w-xl text-balance text-base font-medium leading-relaxed text-ivory md:text-lg">
                   Samarqand viloyati tadbirkorlarining jamoat maslahat kengashi. Biz biznes yetakchilarini birlashtiramiz,
-                  sanoat va investitsiyalarni rivojlantiramiz, mintaqa kelajagini birga quramiz.
+                  sanoat va investitsiyalarni rivojlantiramiz, viloyat kelajagini birga quramiz.
                 </p>
                 <div data-hero-fade className="flex flex-wrap items-center gap-3 md:shrink-0">
                   <Magnetic>

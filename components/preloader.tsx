@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { AnimatePresence, m, animate, useMotionValue, useMotionValueEvent } from "motion/react";
 import { introStore } from "@/lib/store";
 import { enableLite, isLite, probeFrames } from "@/lib/perf";
 import { useLenis } from "@/components/providers/smooth-scroll";
 import { StarMark } from "@/components/logo";
+import { MOTTOS } from "@/lib/mottos";
 
 const WORD = "SAMARQAND".split("");
 const ease = [0.16, 1, 0.3, 1] as const;
 const PETALS = 12;
+
+// a different motto on every load — picked on the client only (the server draws the curtain without it)
+const MOTTO = typeof window === "undefined" ? 0 : Math.floor(Math.random() * MOTTOS.length);
+const noSubscribe = () => () => {};
 
 /**
  * Wait for what the first screen needs: fonts, the hero photo and the carved door of this theme.
@@ -44,6 +49,7 @@ export function Preloader() {
   const root = useRef<HTMLDivElement>(null);
   const digits = useRef<(HTMLSpanElement | null)[]>([]);
   const shown = useRef([-1, -1, -1]);
+  const motto = useSyncExternalStore(noSubscribe, () => MOTTOS[MOTTO], () => null);
 
   // one style write per frame: --p drives the petals and the progress line in CSS; a digit strip is only
   // touched when its digit changes (its CSS transition then rolls it — rewriting it every frame would restart it)
@@ -158,27 +164,48 @@ export function Preloader() {
             </m.p>
           </div>
 
-          <div className="relative flex items-end justify-between gap-6">
-            <div className="h-px flex-1 self-center bg-ivory/10">
-              <div className="preload-line h-full origin-left bg-gradient-to-r from-turq via-gold to-ember" />
-            </div>
-            {/* odometer: each digit is a 0–9 strip that rolls into place */}
-            <span className="odo font-display text-5xl font-light tabular-nums md:text-7xl" aria-label="Yuklanmoqda">
-              {[0, 1, 2].map((k) => (
-                <span key={k} className="odo-col" aria-hidden>
-                  <span
-                    ref={(el) => {
-                      digits.current[k] = el;
-                    }}
-                    className="odo-strip"
-                  >
-                    {Array.from({ length: 10 }).map((_, d) => (
-                      <span key={d}>{d}</span>
+          <div className="relative flex flex-col gap-3 md:gap-4">
+            {/* one of the council's mottos types itself in, in its own colour (globals.css .motto-type) */}
+            <p aria-label={motto?.text} className="min-h-[1.3em] font-display text-base font-semibold uppercase tracking-tight md:text-2xl">
+              {motto && (
+                <span className={motto.gradient ? "text-gradient" : undefined} style={motto.gradient ? undefined : { color: motto.color }}>
+                  <span aria-hidden className="motto-type">
+                    {Array.from(motto.text).map((ch, i) => (
+                      <span key={i} style={{ "--i": i } as CSSProperties}>
+                        {ch}
+                      </span>
                     ))}
                   </span>
+                  <span
+                    aria-hidden
+                    className="motto-caret ml-1 inline-block h-[0.9em] w-[0.12em] translate-y-[0.1em]"
+                    style={{ background: motto.color }}
+                  />
                 </span>
-              ))}
-            </span>
+              )}
+            </p>
+            <div className="flex items-end justify-between gap-6">
+              <div className="h-px flex-1 self-center bg-ivory/10">
+                <div className="preload-line h-full origin-left bg-gradient-to-r from-turq via-gold to-ember" />
+              </div>
+              {/* odometer: each digit is a 0–9 strip that rolls into place */}
+              <span className="odo font-display text-5xl font-light tabular-nums md:text-7xl" aria-label="Yuklanmoqda">
+                {[0, 1, 2].map((k) => (
+                  <span key={k} className="odo-col" aria-hidden>
+                    <span
+                      ref={(el) => {
+                        digits.current[k] = el;
+                      }}
+                      className="odo-strip"
+                    >
+                      {Array.from({ length: 10 }).map((_, d) => (
+                        <span key={d}>{d}</span>
+                      ))}
+                    </span>
+                  </span>
+                ))}
+              </span>
+            </div>
           </div>
         </m.div>
       )}

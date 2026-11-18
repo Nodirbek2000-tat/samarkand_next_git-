@@ -10,12 +10,15 @@
   --color-ink: #f7f4ed;
   --color-ink-2: #ffffff;
   --color-ink-3: #ece6d9;
-  --color-ivory: #0b1424;
+  /* day theme: text and dark surfaces in "wet asphalt" grey instead of near-black */
+  --color-ivory: #3f444c;
   --color-mist: #4a5568;
   --color-turq: #16a34a;
   --color-lapis: #2340d4;
   --color-gold: #f97316;
   --color-ember: #c62828;
+  /* "wet asphalt": a deep grey for large display titles, a step softer than the body text */
+  --color-asphalt: #3f444c;
   --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -54,6 +57,7 @@
   --color-lapis: #5b78ff;
   --color-gold: #ff8a1f;
   --color-ember: #ff5a4f;
+  --color-asphalt: #d4d6dc;
   --grad-1: #34d07a;
   --grad-2: #b6f5cf;
   --grad-3: #ff8a1f;
@@ -563,6 +567,40 @@ html[data-lite] .marquee-skew {
   animation: spin 18s linear infinite;
 }
 
+/* ------------------------------------------------------------------ Shiorlar (lib/mottos.ts)
+   --c is the motto's own colour (set on the element) */
+.motto-seal-ring {
+  animation: spin 22s linear infinite;
+}
+.motto-seal-disc {
+  fill: color-mix(in oklab, var(--c) 9%, var(--color-ink-2));
+  stroke: color-mix(in oklab, var(--c) 55%, transparent);
+  stroke-width: 1;
+}
+.motto-seal-text {
+  fill: var(--c);
+  font: 700 9.5px var(--font-mono);
+  letter-spacing: 0.4px;
+}
+/* preloader: the motto types itself in, letter by letter (--i is the letter's place) */
+.motto-type > span {
+  opacity: 0;
+  animation: motto-type 0.01s steps(1) forwards;
+  animation-delay: calc(0.3s + var(--i) * 20ms);
+}
+.motto-caret {
+  animation: motto-caret 0.9s steps(1) infinite;
+}
+@keyframes motto-type {
+  to { opacity: 1; }
+}
+@keyframes motto-caret {
+  50% { opacity: 0; }
+}
+html[data-lite] .motto-seal-ring {
+  animation: none;
+}
+
 @keyframes scrollcue {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(200%); }
@@ -574,8 +612,13 @@ html[data-lite] .marquee-skew {
   .spin-slow,
   .spin-slower,
   .orb,
-  .text-gradient {
+  .text-gradient,
+  .motto-seal-ring,
+  .motto-type > span {
     animation: none !important;
+  }
+  .motto-type > span {
+    opacity: 1;
   }
 }
 

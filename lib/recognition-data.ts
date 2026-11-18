@@ -14,6 +14,18 @@ export type RecognitionItem = {
   photo?: string | null;
 };
 
+export type AwardKind = "order" | "medal" | "title" | "academy" | "other";
+
+/** what sort of honour an award line is — drives its badge and colour */
+export function awardKind(award: string): AwardKind {
+  const a = award.toLowerCase();
+  if (a.includes("akademiya")) return "academy";
+  if (a.includes("unvon")) return "title";
+  if (a.includes("orden")) return "order";
+  if (a.includes("medal")) return "medal";
+  return "other";
+}
+
 const DECREE = (date: string) => `O‘zbekiston Respublikasi Prezidentining ${date} farmoni bilan`;
 
 export const RECOGNITIONS: RecognitionItem[] = [

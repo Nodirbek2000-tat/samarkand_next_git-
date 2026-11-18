@@ -3,11 +3,12 @@
 import { useRef, useState } from "react";
 import { AnimatePresence, m } from "motion/react";
 import { ArrowUpRight, CheckCircle2, Clock, Mail, MapPin, Phone } from "lucide-react";
-import { gsap, SplitText } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
 import { useSectionSetup } from "@/lib/section-setup";
 import { Magnetic } from "@/components/magnetic";
 import { Roll } from "@/components/roll";
 import { cn } from "@/lib/utils";
+import { MottoTitle } from "@/components/motto-title";
 
 const EMAIL = "info@yangisamarqand.uz";
 
@@ -58,19 +59,6 @@ export function Cta() {
   useSectionSetup(
     root,
     () => {
-      SplitText.create("[data-cta-title]", {
-        type: "chars,lines",
-        mask: "lines",
-        autoSplit: true,
-        onSplit: (self) =>
-          gsap.from(self.chars, {
-            yPercent: 110,
-            duration: 1.2,
-            ease: "expo.out",
-            stagger: 0.02,
-            scrollTrigger: { trigger: "[data-cta-title]", start: "top 80%" },
-          }),
-      });
       gsap.from("[data-cta-form]", {
         y: 100,
         opacity: 0,
@@ -122,15 +110,8 @@ export function Cta() {
           <span className="mb-10 font-mono text-[12.5px] uppercase tracking-[0.22em] text-mist">
             <span className="text-turq">10</span> — Taklif yoki savolingiz bormi?
           </span>
-          <h2
-            data-cta-title
-            data-no-reveal
-            className="font-display text-[12vw] font-bold uppercase leading-[0.9] tracking-[-0.04em] md:text-[8.5vw]"
-          >
-            Kelajakni
-            <br />
-            birga quramiz
-          </h2>
+          {/* the five mottos roll through and it settles on "Yangi Samarqandni birga quramiz" */}
+          <MottoTitle className="w-full max-w-[1400px] text-[7.4vw] md:text-[min(5.4vw,6.5rem)]" />
           <p className="mt-8 max-w-lg text-lg text-ivory/90">
             Murojaat yoki taklif yuboring — Kengash uni ko‘rib chiqadi va siz bilan bog‘lanadi.
           </p>

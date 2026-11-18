@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { useSectionSetup } from "@/lib/section-setup";
 import { heavyEffects } from "@/lib/heavy-effects";
+import { MOTTOS } from "@/lib/mottos";
 
 const ITEMS = ["Muloqot", "Huquqlar himoyasi", "Investitsiyalar", "Sanoat kooperatsiyasi", "Ijtimoiy loyihalar", "Eksport", "Startaplar"];
 
@@ -47,9 +48,37 @@ function Row({ reverse = false, outline = false }: { reverse?: boolean; outline?
             >
               {t}
             </span>
-            <svg className="size-8 shrink-0 md:size-12" aria-hidden>
-              <use href="#marquee-star" />
-            </svg>
+            <Star />
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Star() {
+  return (
+    <svg className="size-8 shrink-0 md:size-12" aria-hidden>
+      <use href="#marquee-star" />
+    </svg>
+  );
+}
+
+/** the council's five mottos, each in its own colour (lib/mottos.ts) — slower, so a whole sentence can be read */
+function MottoRow() {
+  const list = [...MOTTOS, ...MOTTOS];
+  return (
+    <div className="flex overflow-hidden">
+      <div className="marquee-track marquee-reverse flex shrink-0 items-center gap-10 pr-10" style={{ "--marquee-speed": "70s" } as React.CSSProperties}>
+        {list.map((mt, i) => (
+          <span key={i} className="flex items-center gap-10" aria-hidden={i >= MOTTOS.length || undefined}>
+            <span
+              className={`whitespace-nowrap font-display text-4xl font-bold uppercase tracking-tight md:text-7xl ${mt.gradient ? "text-gradient" : ""}`}
+              style={mt.gradient ? undefined : { color: mt.color }}
+            >
+              {mt.text}
+            </span>
+            <Star />
           </span>
         ))}
       </div>
@@ -84,8 +113,8 @@ export function Marquee() {
     <section ref={root} data-cv aria-label="Kengash qadriyatlari" className="relative overflow-hidden border-y border-ivory/10 bg-ink py-10 md:py-14">
       <StarSprite />
       <div data-skew className="marquee-skew flex flex-col gap-4 md:gap-6">
-        <Row />
-        <Row reverse outline />
+        <Row outline />
+        <MottoRow />
       </div>
     </section>
   );

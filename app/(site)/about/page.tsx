@@ -28,11 +28,11 @@ const BEGINNING = [
   {
     when: "Kengash raisi",
     title: "Haydar O‘roqov",
-    text: "Ishtirokchilar Jamoat kengashi raisi etib Samarqand tumanidagi «NAVOBOD NASLLI PARRANDA» fermer xo‘jaligi rahbari Haydar Muhammadiyevich O‘roqovni sayladi.",
+    text: "Ishtirokchilar Jamoat kengashi raisi etib Samarqand tumanidagi «NAVOBOD NASLLI PARRANDA» fermer xo‘jaligi rahbari Haydar Muhammadiyevich O‘roqovni saylashdi.",
   },
   {
     when: "Keyingi uchrashuvlar",
-    title: "Fond g‘oyasi",
+    title: "Fond tashkil qilish g‘oyasi",
     text: "Yosh tadbirkorlarni moliyaviy qo‘llab-quvvatlash, ilmiy ishlanmalarni joriy etish, yoshlar startaplarini moliyalashtirish va ijtimoiy hayotni yaxshilash uchun fond tuzish taklif qilindi.",
   },
 ];
@@ -55,7 +55,7 @@ export default async function AboutPage() {
         kicker="Biz haqimizda"
         title="Tadbirkorlar"
         highlight="jamoat kengashi"
-        description={page?.subtitle || "Tadbirkorlikni jadal rivojlantirish sari birgamiz."}
+        description={page?.subtitle || "Birgalikda — tadbirkorlik yuksalishi sari!"}
         crumbs={[{ label: "Biz haqimizda" }]}
       />
 

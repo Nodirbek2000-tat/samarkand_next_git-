@@ -3,6 +3,7 @@ import { SmoothScroll } from "@/components/providers/smooth-scroll";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { RouteEffects } from "@/components/site/route-effects";
+import { MottoToast } from "@/components/site/motto-toast";
 import { api } from "@/lib/api/server";
 
 export default async function SiteLayout({ children }: LayoutProps<"/">) {
@@ -16,6 +17,7 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
         <SiteFooter settings={settings} />
+        <MottoToast />
       </MotionProvider>
     </SmoothScroll>
   );

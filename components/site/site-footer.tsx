@@ -8,6 +8,7 @@ import { Logo } from "@/components/logo";
 import { useLenis } from "@/components/providers/smooth-scroll";
 import type { SiteSettings } from "@/lib/api/types";
 import { SITE_NAV } from "./nav";
+import { FooterMotto } from "./footer-motto";
 
 export function SiteFooter({ settings }: { settings: SiteSettings | null }) {
   const root = useRef<HTMLElement>(null);
@@ -35,7 +36,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings | null }) {
           <Logo />
           <p className="mt-6 max-w-sm text-base leading-relaxed text-ivory/80">
             {settings?.council_name || "Samarqand viloyati tadbirkorlarining jamoat maslahat kengashi"}.{" "}
-            {settings?.slogan ? `${settings.slogan}.` : ""}
+            {settings?.slogan ? `${settings.slogan}${/[.!?]$/.test(settings.slogan) ? "" : "."}` : ""}
           </p>
           <ul className="mt-8 space-y-3 text-base">
             <li>
@@ -97,6 +98,8 @@ export function SiteFooter({ settings }: { settings: SiteSettings | null }) {
           </button>
         </div>
       </div>
+
+      <FooterMotto />
 
       <div
         data-giant

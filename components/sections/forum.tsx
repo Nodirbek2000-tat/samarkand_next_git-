@@ -178,28 +178,30 @@ export function Forum() {
             >
               <span className="text-turq">06</span>
               <span className="h-px w-12 bg-ivory/20" />
-              Sanoatchilar forumi
+              Forum g‘oliblari
             </div>
             <h2
               data-forum-title
               data-no-reveal
               className={cn(
                 "font-display font-semibold uppercase tracking-[-0.03em]",
-                wide ? "text-[min(4.5rem,4vw)]" : "text-[clamp(1.85rem,8.4vw,3.6rem)]",
+                // «Sanoatchilar» is one long word: a size that fits the title column
+                wide ? "text-[min(3.2rem,2.9vw)]" : "text-[clamp(1.85rem,8.4vw,3.6rem)]",
                 "leading-[0.95]", // after the size: tailwind-merge drops a leading-* that precedes a text-* size
               )}
             >
               <span className="block overflow-hidden">
-                <span className="block">Eng ilg‘orlar</span>
+                <span className="block">Sanoatchilar</span>
               </span>
               <span className="block overflow-hidden">
-                <span className="text-gradient block">e’tirofi</span>
+                <span className="text-gradient block">forumi</span>
               </span>
             </h2>
             {wide && (
               <p className="mt-6 max-w-md text-lg leading-relaxed text-ivory/85">
-                Har yili forumda lokalizatsiya, kooperatsiya va eksport masalalari muhokama qilinadi, viloyatning eng
-                ilg‘or korxonalari taqdirlanadi.
+                Har yili Sanoatchilar forumida mahalliylashtirishni chuqurlashtirish, sanoat kooperatsiyasini kengaytirish va
+                eksportni ko‘paytirish masalalari muhokama qilinadi, viloyatning eng ilg‘or korxonalari turli nominatsiyalarda
+                taqdirlanadi.
               </p>
             )}
 

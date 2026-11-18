@@ -35,8 +35,8 @@ export const SITE_NAV: NavGroup[] = [
     label: "Biz haqimizda",
     href: "/about",
     children: [
-      { label: "Biz haqimizda", href: "/about", desc: "Missiya, maqsadlar va qadriyatlar", icon: Landmark },
       { label: "Tashkil topish tarixi", href: "/about/history", desc: "2021-yildan bugungacha", icon: History },
+      { label: "Biz haqimizda", href: "/about", desc: "Missiya, maqsadlar va qadriyatlar", icon: Landmark },
       { label: "Korporativ elementlar", href: "/about/corporate", desc: "Nomi, shiori va uslubi", icon: Palette },
       { label: "A’zolik", href: "/about/membership", desc: "Shartlar, badallar, ariza", icon: CircleDollarSign },
     ],
@@ -49,7 +49,7 @@ export const SITE_NAV: NavGroup[] = [
       { label: "Boshqaruv", href: "/council/management", desc: "Kengash Boshqaruvi tarkibi", icon: ShieldCheck },
       { label: "Rahbariyat", href: "/council/leadership", desc: "Fond ijroiya apparati", icon: UserRound },
       { label: "Kengash yig‘ilishlari", href: "/council/meetings", desc: "Hokim ishtirokidagi muloqot", icon: Calendar },
-      { label: "Yutuqlarni e’tirof etish", href: "/council/recognition", desc: "Mukofot va unvonlar", icon: Award },
+      { label: "Eng ilg‘orlarni e’tirof etish", href: "/council/recognition", desc: "Mukofot va unvonlar", icon: Award },
     ],
   },
   {

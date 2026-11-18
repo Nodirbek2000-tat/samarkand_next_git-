@@ -14,17 +14,17 @@ const STEPS = [
   },
   {
     icon: Factory,
-    title: "Ishlab chiqarish bilan tanishuv",
-    text: "Yig‘ilish boshlanishidan oldin ishtirokchilar mezbon kompaniyaning ishlab chiqarish faoliyati bilan tanishadi.",
+    title: "Ishlab chiqarish va boshqaruv jarayonlari bilan tanishuv",
+    text: "Yig‘ilish boshlanishidan oldin ishtirokchilar mezbon kompaniyaning ishlab chiqarish faoliyati va boshqaruv jarayonlari bilan tanishadi.",
   },
   {
     icon: Users,
-    title: "Hokim va soha rahbarlari bilan muloqot",
+    title: "Hokim va tadbirkorlar bilan muloqot",
     text: "Viloyat hokimi ishtirok etadi. Soliq, elektr tarmoqlari, gaz ta’minoti, suvoqova va kadastr rahbarlari — doimiy ishtirokchilar.",
   },
   {
     icon: ClipboardCheck,
-    title: "Topshiriq va nazorat",
+    title: "Tegishli rahbarlarga topshiriqlar va ijro nazorati",
     text: "Bildirilgan muammo va takliflar bo‘yicha hokim mas’ullarga topshiriq beradi, ular bayonnomaga kiritiladi va ijrosi nazorat qilinadi.",
   },
 ];
@@ -77,7 +77,7 @@ export function Meetings() {
               <span className="text-gradient">natija beradi</span>
             </h2>
             <p className="mt-8 max-w-md text-lg leading-relaxed text-ivory/85">
-              Kengash a’zolari yig‘ilishlari — ishning asosiy shakllaridan biri. Har bir muammo bayonnomaga tushadi va
+              <b className="font-bold text-gold">Kengash a’zolari yig‘ilishlari</b> — ishning asosiy shakllaridan biri. Har bir muammo bayonnomaga tushadi va
               ijrosi nazorat qilinadi.
             </p>
           </div>
