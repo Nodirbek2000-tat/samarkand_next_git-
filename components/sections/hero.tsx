@@ -361,7 +361,7 @@ export function Hero() {
       <div className="relative z-10 mx-auto flex h-full max-w-[1600px] flex-col justify-between px-5 pb-8 pt-24 md:px-10 md:pb-9 md:pt-[6.5rem]">
         <div data-hero-copy className="text-center">
           <div data-reveal className="invisible">
-            <h1 className="font-display font-bold uppercase leading-[0.86] tracking-[-0.04em] [text-shadow:0_8px_40px_rgb(3_5_11/0.75)]">
+            <h1 className="font-display font-bold uppercase leading-[0.86] tracking-[-0.04em]">
               <span data-hero-title aria-label="Yangi" className="block whitespace-nowrap text-[min(17vw,11svh)] md:text-[min(8.4vw,14.5svh)]">
                 {/* one line, clipped below so the letters rise out of the ground (not at the sides) */}
                 <span aria-hidden className="block [overflow-clip-margin:0.12em] [overflow:visible_clip]">
