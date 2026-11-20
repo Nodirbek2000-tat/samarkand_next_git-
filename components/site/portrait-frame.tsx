@@ -25,6 +25,14 @@ const COLOR: Record<Sector, string> = {
 
 const W = 400;
 const H = 500;
+// the frame: a border band from O to I in from the edges, corner stars centred in it
+const O = 10;
+const I = 30;
+const C = (O + I) / 2;
+const BAND = `M${O + 16} ${O}H${W - O - 16}Q${W - O} ${O} ${W - O} ${O + 16}V${H - O - 16}Q${W - O} ${H - O} ${W - O - 16} ${H - O}H${O + 16}Q${O} ${H - O} ${O} ${H - O - 16}V${O + 16}Q${O} ${O} ${O + 16} ${O}Z M${I} ${I}V${H - I}H${W - I}V${I}Z`;
+
+const MAT = `M-20 -20H${W + 20}V${H + 20}H-20Z ` + BAND.split(" M")[0];
+
 // the pointed arch — springs at y=210, its tip just above the head
 const arch = (inset: number) => {
   const l = 62 - inset;
@@ -212,7 +220,7 @@ export function PortraitFrame({
             </g>
           </pattern>
         </defs>
-        <rect width={W} height={H} fill={`url(#${id}t)`} opacity="0.42" />
+        <rect width={W} height={H} fill={`url(#${id}t)`} opacity="0.55" />
         {/* the arch: a calm field behind the head, a bead row between two lines around it */}
         <path d={arch(0)} fill="var(--color-ink-2)" fillOpacity="0.82" />
         <path d={arch(0)} fill={`url(#${id}t)`} opacity="0.08" />
@@ -240,6 +248,42 @@ export function PortraitFrame({
           <span className={cn("font-display font-bold opacity-85", initialsClassName)}>{initials(name)}</span>
         </div>
       )}
+      {/* the frame over it all: a tiled border band between two lines, a bead row inside, a star in each corner —
+          the portrait sits inside the frame, as in a tile panel */}
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" className="pointer-events-none absolute inset-0 size-full" aria-hidden>
+        <defs>
+          <pattern id={`${id}b`} width="20" height="20" patternUnits="userSpaceOnUse" patternTransform={`translate(${O} ${O})`}>
+            <g fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round">
+              <path d="M10 2.5L17.5 10 10 17.5 2.5 10Z" />
+              <circle cx="10" cy="10" r="1.8" fill="currentColor" stroke="none" />
+              <path d="M0 0L2.5 2.5M20 0L17.5 2.5M0 20L2.5 17.5M20 20L17.5 17.5" opacity="0.6" />
+            </g>
+          </pattern>
+        </defs>
+        <path d={MAT} fillRule="evenodd" fill="var(--color-ink-2)" />
+        <path d={MAT} fillRule="evenodd" style={{ fill: "color-mix(in oklab, currentColor 8%, transparent)" }} />
+        <path d={BAND} fillRule="evenodd" fill="var(--color-ink-2)" />
+        <path d={BAND} fillRule="evenodd" style={{ fill: "color-mix(in oklab, currentColor 16%, transparent)" }} />
+        <path d={BAND} fillRule="evenodd" fill={`url(#${id}b)`} opacity="0.85" />
+        <g fill="none" stroke="currentColor">
+          <rect x={O} y={O} width={W - 2 * O} height={H - 2 * O} rx="16" strokeWidth="1.6" />
+          <rect x={I} y={I} width={W - 2 * I} height={H - 2 * I} rx="6" strokeWidth="1.6" />
+          <rect x={I + 7} y={I + 7} width={W - 2 * I - 14} height={H - 2 * I - 14} rx="3" strokeWidth="2" strokeLinecap="round" strokeDasharray="0 8" opacity="0.7" />
+        </g>
+        {[
+          [C, C],
+          [W - C, C],
+          [C, H - C],
+          [W - C, H - C],
+        ].map(([x, y]) => (
+          <g key={`${x}-${y}`}>
+            <circle cx={x} cy={y} r="15" fill="var(--color-ink-2)" />
+            <circle cx={x} cy={y} r="15" style={{ fill: "color-mix(in oklab, currentColor 22%, transparent)" }} stroke="currentColor" strokeWidth="1.2" />
+            <path d={star(x, y, 12, 8, 3)} fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+            <circle cx={x} cy={y} r="2.4" fill="currentColor" />
+          </g>
+        ))}
+      </svg>
       {children}
     </div>
   );
