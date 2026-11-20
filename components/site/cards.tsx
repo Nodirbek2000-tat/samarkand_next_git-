@@ -2,9 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, CalendarDays, Camera, Clock, Eye, MapPin, Play } from "lucide-react";
 import type { Announcement, BoardMember, CouncilMember, Film, Gallery, Leader, NewsItem, Project } from "@/lib/api/types";
-import { dayMonth, formatDate, formatDateTime, initials } from "@/lib/format";
+import { dayMonth, formatDate, formatDateTime } from "@/lib/format";
+import { sectorOf, type Sector } from "@/lib/sectors";
 import { cn } from "@/lib/utils";
 import { Cover } from "./cover";
+import { PortraitFrame } from "./portrait-frame";
 
 const card =
   "group relative flex h-full flex-col overflow-hidden rounded-[1.6rem] border border-ivory/10 bg-ink-2 transition-[transform,box-shadow,border-color] duration-700 ease-expo hover:-translate-y-1.5 hover:border-turq/40 hover:shadow-[0_30px_80px_-40px_color-mix(in_oklab,var(--color-turq)_55%,transparent)]";
@@ -84,28 +86,16 @@ export function NewsCard({ item, featured = false, className }: { item: NewsItem
   );
 }
 
-type PersonLike = Pick<CouncilMember, "full_name" | "photo" | "slug"> & { subtitle?: string; meta?: string };
+type PersonLike = Pick<CouncilMember, "full_name" | "photo" | "slug"> & { subtitle?: string; meta?: string; sector?: Sector };
 
 export function PersonCard({ person, href, badge, className }: { person: PersonLike; href?: string; badge?: string; className?: string }) {
   const body = (
     <>
-      <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-turq/15 via-lapis/10 to-gold/15">
-        {person.photo ? (
-          <Image src={person.photo} alt={person.full_name} fill sizes="(min-width:1024px) 25vw, 50vw" className={cn("object-cover", zoom)} />
-        ) : (
-          <div className="absolute inset-0 grid place-items-center">
-            <svg viewBox="0 0 200 200" className="absolute inset-0 size-full opacity-[0.18]" fill="none" stroke="currentColor" strokeWidth="0.6" aria-hidden>
-              {Array.from({ length: 8 }).map((_, i) => (
-                <rect key={i} x="40" y="40" width="120" height="120" transform={`rotate(${i * 11.25} 100 100)`} />
-              ))}
-            </svg>
-            <span className="relative font-display text-6xl font-bold text-turq/80">{initials(person.full_name)}</span>
-          </div>
-        )}
+      <PortraitFrame name={person.full_name} photo={person.photo} sector={person.sector ?? "general"} sizes="(min-width:1024px) 25vw, 50vw" hoverZoom>
         {badge && (
           <span className="absolute left-4 top-4 rounded-full bg-[#a5620b] px-3 py-1 text-[13px] font-semibold text-white">{badge}</span>
         )}
-      </div>
+      </PortraitFrame>
       <div className="flex flex-1 flex-col p-5 md:p-6">
         <h3 className="font-display text-lg font-semibold leading-snug md:text-xl">{person.full_name}</h3>
         {person.subtitle && <p className="mt-2 text-[15px] leading-relaxed text-ivory/80">{person.subtitle}</p>}
@@ -126,12 +116,19 @@ export const memberToPerson = (m: CouncilMember): PersonLike => ({
   ...m,
   subtitle: m.company,
   meta: m.position,
+  sector: sectorOf(m.industry, m.company),
 });
-export const boardToPerson = (m: BoardMember): PersonLike => ({ ...m, subtitle: m.workplace, meta: m.role_label });
+export const boardToPerson = (m: BoardMember): PersonLike => ({
+  ...m,
+  subtitle: m.workplace,
+  meta: m.role_label,
+  sector: sectorOf(null, m.workplace),
+});
 export const leaderToPerson = (m: Leader): PersonLike => ({
   ...m,
   subtitle: [m.position, m.organization].filter(Boolean).join(" · "),
   meta: m.reception_hours ? `Qabul: ${m.reception_hours}` : undefined,
+  sector: sectorOf(null, m.organization, m.position),
 });
 
 export function GalleryCard({ gallery, className }: { gallery: Gallery; className?: string }) {

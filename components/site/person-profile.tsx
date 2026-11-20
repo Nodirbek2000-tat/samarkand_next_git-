@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Globe, Mail, Phone } from "lucide-react";
-import { initials } from "@/lib/format";
+import { sectorOf } from "@/lib/sectors";
+import { PortraitFrame } from "./portrait-frame";
 import { Reveal } from "./reveal";
 import { Container, RichText } from "./ui";
 
@@ -29,20 +29,15 @@ export function PersonProfile({
       </Link>
       <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
         <Reveal className="lg:col-span-5">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-[2.2rem] border border-ivory/10 bg-gradient-to-br from-turq/20 via-lapis/15 to-gold/20">
-            {photo ? (
-              <Image src={photo} alt={name} fill sizes="(min-width:1024px) 40vw, 100vw" className="object-cover" priority />
-            ) : (
-              <div className="absolute inset-0 grid place-items-center">
-                <svg viewBox="0 0 200 200" className="absolute inset-0 size-full opacity-20" fill="none" stroke="currentColor" strokeWidth="0.5" aria-hidden>
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <rect key={i} x="35" y="35" width="130" height="130" transform={`rotate(${i * 7.5} 100 100)`} />
-                  ))}
-                </svg>
-                <span className="relative font-display text-[7rem] font-bold text-turq/80">{initials(name)}</span>
-              </div>
-            )}
-          </div>
+          <PortraitFrame
+            name={name}
+            photo={photo}
+            sector={sectorOf(lines.find((l) => l.label === "Faoliyat sohasi")?.value, ...lines.map((l) => l.value))}
+            sizes="(min-width:1024px) 40vw, 100vw"
+            priority
+            className="rounded-[2.2rem] border border-ivory/10"
+            initialsClassName="text-[7rem]"
+          />
         </Reveal>
         <Reveal className="lg:col-span-7" delay={0.1}>
           {role && (
